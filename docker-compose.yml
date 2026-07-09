@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   mysql:
     image: mysql:8.0
@@ -10,11 +9,33 @@ services:
       MYSQL_DATABASE: eventhub_core
     volumes:
       - mysql_data:/var/lib/mysql
+
   redis:
     image: redis:alpine
     container_name: eventhub_redis
     ports:
       - "6379:6379"
+
+  core-api:
+    build:
+      context: ./core-api
+      dockerfile: Dockerfile
+    container_name: eventhub_core_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./core-api:/var/www/html
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: eventhub_core
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      REDIS_HOST: redis
 
 volumes:
   mysql_data:

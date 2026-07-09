@@ -1,19 +1,34 @@
-# TODO - EventHub Monorepo Scaffolding
+# TODO
 
-## Step 1: Repo inspection
-- [x] Read CLAUDE.md and docs to understand target monorepo structure
-- [x] Verify current filesystem contents (directories: core-api, frontend, payment-service, notification-service)
+## Orders (table orders)
+- [ ] Add migration for `orders` table
+- [ ] Add `Order` model with casts/fillable
+- [x] Add `OrderRepositoryInterface` and `OrderRepository`
 
-## Step 2: Scaffold missing folders
-- [x] Create `core-api/` skeleton (Laravel 11) matching CLAUDE.md tree
-- [x] Create `frontend/` skeleton (Next.js) matching CLAUDE.md tree
-- [ ] Create `payment-service/` skeleton (Laravel/Lumen) matching CLAUDE.md tree
-- [ ] Create `notification-service/` skeleton matching CLAUDE.md tree
+- [x] Add `OrderService`
 
-## Step 3: Add minimal runnable configs
-- [x] Add root `docker-compose.yml` (only if missing)
-- [ ] Add minimal `README.md` if missing
+- [x] Add `StoreOrderRequest` and `UpdateOrderRequest`
 
-## Step 4: Validate
-- [ ] Run basic checks (directory existence, no syntax errors in configs)
+- [x] Add `OrderController`
+
+- [x] Register `apiResource('orders')` in `core-api/routes/api.php`
+- [ ] Run `php artisan migrate` and sanity-check basic endpoints (fails in this environment due to MySQL host/Docker config)
+
+## Disputes (table disputes)
+- [x] Migration/model/controller/service/repository/requests created for `disputes`
+- [x] Registered `apiResource('disputes')` under `/api/v1` with auth:sanctum
+- [ ] Test CRUD on Postman (CRED)
+
+## Payments (table payments)
+
+- [x] Migration for `payments` table
+- [x] Payment model + casts/relationship
+- [x] Payment repository + contract
+- [x] StorePaymentRequest + UpdatePaymentRequest
+- [x] PaymentController + `apiResource('payments')` route
+- [ ] Test Create (C) operation on Postman (POST /api/v1/payments)
+
+
+
+
 

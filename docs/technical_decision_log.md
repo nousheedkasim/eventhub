@@ -50,3 +50,4 @@ This Technical Decision Log (TDL) acts as an Architecture Decision Record (ADR) 
 Given the strict 5-day timeline, the following pragmatic compromises were accepted:
 1. **Monorepo Directory Isolation:** The services are co-located within a single Git repository for deployment speed, though they are written to allow an instant split into independent infrastructure codebases later.
 2. **Simplified Authentication Mesh:** Inter-service verification utilizes hardcoded shared cryptographic secrets inside environment configurations rather than a dedicated OAuth2/OIDC server setup.
+
