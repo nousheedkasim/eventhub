@@ -1,0 +1,23 @@
+{
+  "name": "eventhub-backend",
+  "description": "AI skill for the EventHub core backend (core-api Laravel 11).",
+  "workspace": "core-api",
+  "entrypoints": [
+    "core-api/routes/api.php",
+    "core-api/app/Http/Controllers/",
+    "core-api/app/Services/",
+    "core-api/database/migrations/",
+    "core-api/database/seeders/"
+  ],
+  "commands": {
+    "test": "cd core-api && php artisan test",
+    "migrate": "cd core-api && php artisan migrate",
+    "seed": "cd core-api && php artisan db:seed",
+    "route:list": "cd core-api && php artisan route:list"
+  },
+  "notes": [
+    "Core API uses Laravel 11." ,
+    "Business logic belongs in core-api/app/Services and data access in core-api/app/Repositories."
+  ]
+}
+

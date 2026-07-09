@@ -1,0 +1,10 @@
+{
+  "name": "eventhub-payment",
+  "description": "AI skill for the EventHub payment microservice.",
+  "workspace": "payment-service",
+  "entrypoints": [
+    "payment-service/routes/",
+    "payment-service/app/"
+  ]
+}
+

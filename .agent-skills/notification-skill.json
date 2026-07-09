@@ -1,0 +1,10 @@
+{
+  "name": "eventhub-notification",
+  "description": "AI skill for the EventHub notification microservice.",
+  "workspace": "notification-service",
+  "entrypoints": [
+    "notification-service/app/Jobs/",
+    "notification-service/app/Services/"
+  ]
+}
+
