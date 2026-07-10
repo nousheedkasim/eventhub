@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     && docker-php-ext-install zip pdo pdo_mysql \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
 # Enable mod_rewrite for Laravel routing
@@ -18,7 +20,11 @@ WORKDIR /var/www/html
 
 # Copy composer manifests first (best-effort for caching)
 COPY composer.json composer.lock ./
-RUN if [ -f composer.json ]; then composer install --no-interaction --prefer-dist --no-dev; fi
+# Install dependencies without running Laravel scripts during image build.
+# Laravel's post-autoload-dump currently calls `artisan`, which isn't available until after COPY . .
+RUN if [ -f composer.json ]; then \
+    composer install --no-interaction --prefer-dist --no-dev --no-scripts; \
+fi
 
 # Copy the rest of the application
 COPY . .
@@ -27,7 +33,3 @@ COPY . .
 RUN chown -R www-data:www-data storage bootstrap/cache || true
 
 EXPOSE 8000
-
-# Laravel 11 entry (Apache)
-# Document root is already /var/www/html/public
-

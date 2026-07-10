@@ -14,14 +14,9 @@ class StorePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order_id' => ['required', 'integer', 'min:1', 'exists:orders,id'],
-            'gateway' => ['required', 'string', 'max:50'],
-            'status' => ['required', 'string', 'in:pending,authorized,paid,failed,refunded'],
-            'idempotency_key' => ['required', 'string', 'max:255', 'unique:payments,idempotency_key'],
-            'gateway_reference' => ['nullable', 'string', 'max:255'],
-            'amount' => ['required', 'numeric', 'min:0'],
-            'currency' => ['required', 'string', 'size:3'],
-            'paid_at' => ['nullable', 'date'],
+            'order_id' => ['required', 'integer', 'exists:orders,id'],
+            'gateway' => ['required', 'string', 'in:stripe,paypal'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

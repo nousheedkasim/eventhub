@@ -7,12 +7,20 @@ use App\Http\Requests\StoreDisputeRequest;
 use App\Http\Requests\UpdateDisputeRequest;
 use App\Models\Dispute;
 use App\Services\DisputeService;
+use Illuminate\Http\Request;
 
 class DisputeController extends Controller
 {
     public function __construct(
         private DisputeService $disputeService
     ) {}
+
+    private function requireAdmin(Request $request): void
+    {
+        if ($request->user()?->type !== 'admin') {
+            abort(403, 'Admin only');
+        }
+    }
 
     public function index()
     {
@@ -32,20 +40,57 @@ class DisputeController extends Controller
         return response()->json($dispute);
     }
 
-    public function update(UpdateDisputeRequest $request, Dispute $dispute)
+    // Admin only
+    public function update(Request $request, Dispute $dispute)
     {
+        $this->requireAdmin($request);
+
+        $validated = $request->validate([
+            'status' => ['sometimes', 'string', 'in:open,investigating,resolved,rejected'],
+            'reason' => ['sometimes', 'nullable', 'string'],
+            'resolution' => ['sometimes', 'nullable', 'string'],
+            'resolved_at' => ['sometimes', 'nullable', 'date'],
+        ]);
+
         return response()->json(
-            $this->disputeService->update($dispute->id, $request->validated())
+            $this->disputeService->update($dispute->id, $validated)
         );
     }
 
-    public function destroy(Dispute $dispute)
+    // Admin only
+    public function destroy(Request $request, Dispute $dispute)
     {
+        $this->requireAdmin($request);
+
         $this->disputeService->delete($dispute->id);
 
         return response()->json([
             'message' => 'Dispute deleted successfully',
         ]);
     }
+
+    // Admin only operation: resolve/reject a dispute
+    public function resolve(Request $request, Dispute $dispute)
+    {
+        $this->requireAdmin($request);
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:resolved,rejected'],
+            'resolution' => ['required', 'string', 'max:10000'],
+            'resolved_at' => ['nullable', 'date'],
+        ]);
+
+        $payload = [
+            'status' => $validated['status'],
+            'resolution' => $validated['resolution'],
+            'resolved_at' => $validated['resolved_at'] ?? now(),
+        ];
+
+        return response()->json(
+            $this->disputeService->update($dispute->id, $payload)
+        );
+    }
 }
+
+
 

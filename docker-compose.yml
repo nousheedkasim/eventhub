@@ -36,6 +36,29 @@ services:
       DB_USERNAME: root
       DB_PASSWORD: root
       REDIS_HOST: redis
+      PAYMENT_SERVICE_URL: http://payment-service:8001
+      PAYMENT_SERVICE_SECRET: secure_shared_secret
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: eventhub_payment_service
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./payment-service:/var/www/html
+    depends_on:
+      - redis
+    environment:
+      APP_ENV: local
+      APP_KEY: base64:I4lIuNQ/ohBnMUjHt0SmF5tBpjBKag7XWDEjPzvD62Q=
+      QUEUE_CONNECTION: database
+      PAYMENT_SERVICE_SECRET: secure_shared_secret
+      CORE_API_URL: http://core-api:8000
+      STRIPE_SUCCESS_RATE: 0.9
+      PAYPAL_SUCCESS_RATE: 0.8
 
 volumes:
   mysql_data:

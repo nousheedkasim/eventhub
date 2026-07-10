@@ -18,5 +18,15 @@ class Order extends Model
         'total_amount' => 'decimal:2',
         'hold_expires_at' => 'datetime',
     ];
+
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function events()
+    {
+        return $this->hasMany(OrderEvent::class);
+    }
 }
 

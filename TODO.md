@@ -1,34 +1,21 @@
-# TODO
+# Task Progress Tracker
 
-## Orders (table orders)
-- [ ] Add migration for `orders` table
-- [ ] Add `Order` model with casts/fillable
-- [x] Add `OrderRepositoryInterface` and `OrderRepository`
+## Day 3 deliverables (order locking/holds/expiry, payment simulation, webhook handling, unit tests)
+- [x] Inspect existing Day 3 related models/repositories/controllers/routes/tests
+- [x] Implement order hold + expiry release logic (transaction + row locking)
+- [x] Implement payment simulation for 2 gateways with idempotency enforcement
+- [x] Implement webhook handler to transition payment + order state safely
+- [x] Add unit tests for:
+  - [x] Concurrent purchase oversell prevention
+  - [x] Hold expiry releases inventory
+  - [x] Idempotency prevents duplicate payments
+- [x] Run tests (`php artisan test`) and fix any failures
 
-- [x] Add `OrderService`
-
-- [x] Add `StoreOrderRequest` and `UpdateOrderRequest`
-
-- [x] Add `OrderController`
-
-- [x] Register `apiResource('orders')` in `core-api/routes/api.php`
-- [ ] Run `php artisan migrate` and sanity-check basic endpoints (fails in this environment due to MySQL host/Docker config)
-
-## Disputes (table disputes)
-- [x] Migration/model/controller/service/repository/requests created for `disputes`
-- [x] Registered `apiResource('disputes')` under `/api/v1` with auth:sanctum
-- [ ] Test CRUD on Postman (CRED)
-
-## Payments (table payments)
-
-- [x] Migration for `payments` table
-- [x] Payment model + casts/relationship
-- [x] Payment repository + contract
-- [x] StorePaymentRequest + UpdatePaymentRequest
-- [x] PaymentController + `apiResource('payments')` route
-- [ ] Test Create (C) operation on Postman (POST /api/v1/payments)
-
-
-
-
+## Day 4 deliverables (notification service, background jobs, frontend)
+- [ ] Implement notification microservice with queue-driven architecture
+- [ ] Add email notification simulation (order confirmation, event reminders, payouts)
+- [ ] Implement webhook delivery to vendors with retry logic
+- [ ] Add cron jobs for payout batch processing and event reminders
+- [ ] Build functional Next.js frontend (vendor dashboard, attendee pages, admin panel)
+- [ ] Integrate frontend with core API
 

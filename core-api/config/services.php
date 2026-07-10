@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'payment' => [
+        'url' => env('PAYMENT_SERVICE_URL', 'http://localhost:8001'),
+        'secret' => env('PAYMENT_SERVICE_SECRET', 'secure_shared_secret'),
+    ],
+
 ];

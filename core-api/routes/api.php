@@ -36,6 +36,9 @@ Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
 
+        // Custom route for approving a vendor (Admin only)
+        Route::post('vendors/approve', [VendorController::class, 'approve']);
+
         Route::apiResource(
             'events',
             EventController::class
@@ -96,7 +99,14 @@ Route::prefix('v1')
             DisputeController::class
         );
 
+        // Admin-only operations
+        Route::post('disputes/{dispute}/resolve', [DisputeController::class, 'resolve']);
     });
+
+// Webhook callback endpoint for payment microservice status updates
+Route::post('v1/webhooks/payment', [WebhookController::class, 'handlePaymentCallback'])
+    ->middleware('shared.secret');
+
 
 
 

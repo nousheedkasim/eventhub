@@ -14,12 +14,9 @@ class StoreRefundRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_id' => ['required', 'integer', 'min:1', 'exists:payments,id'],
+            'payment_id' => ['required', 'integer', 'exists:payments,id'],
             'amount' => ['required', 'numeric', 'min:0'],
-            'policy_applied' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'in:pending,approved,completed,failed'],
             'reason' => ['nullable', 'string'],
-            'refunded_at' => ['nullable', 'date'],
         ];
     }
 }

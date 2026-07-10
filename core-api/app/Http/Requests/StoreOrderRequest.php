@@ -14,14 +14,10 @@ class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'attendee_id' => ['required', 'integer', 'min:1'],
-            'status' => [
-                'required',
-                'string',
-                'in:pending,held,paid,cancelled,expired,refunded',
-            ],
-            'total_amount' => ['required', 'numeric', 'min:0'],
-            'hold_expires_at' => ['nullable', 'date'],
+            'attendee_id' => ['nullable', 'integer', 'exists:users,id'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.ticket_type_id' => ['required', 'integer', 'exists:ticket_types,id'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
         ];
     }
 }
