@@ -12,8 +12,38 @@ Complete A-to-Z setup guide for the EventHub multi-service platform.
 ## 2) Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/nousheedkasim/eventhub
 cd eventhub
+```
+
+## 2.5) Install Dependencies
+
+### For Docker Setup (Recommended)
+Dependencies are installed automatically during the Docker build process. No manual installation needed.
+
+### For Local Development
+Install dependencies for each service:
+
+```bash
+# Frontend dependencies
+cd frontend
+npm install
+cd ..
+
+# Core API dependencies
+cd core-api
+composer install
+cd ..
+
+# Payment Service dependencies
+cd payment-service
+composer install
+cd ..
+
+# Notification Service dependencies
+cd notification-service
+npm install
+cd ..
 ```
 
 ## 3) Start Infrastructure Services
