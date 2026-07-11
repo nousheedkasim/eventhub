@@ -17,6 +17,11 @@ class PayoutService
         return $this->repository->all();
     }
 
+    public function getByVendor($vendorId)
+    {
+        return $this->repository->getByVendor($vendorId);
+    }
+
     public function create(array $data)
     {
         return $this->repository->create($data);
@@ -24,19 +29,20 @@ class PayoutService
 
     /**
      * Calculate commission deduction and enforce minimum payout threshold
+     * All monetary values in cents (integers)
      */
-    public function calculatePayout(float $grossAmount, float $commissionRate, float $minThreshold): array
+    public function calculatePayout(int $grossAmountCents, float $commissionRate, int $minThresholdCents): array
     {
-        $commission = round($grossAmount * $commissionRate, 2);
-        $netAmount = round($grossAmount - $commission, 2);
-        $eligible = ($netAmount >= $minThreshold);
+        $commission = (int) round($grossAmountCents * $commissionRate);
+        $netAmount = $grossAmountCents - $commission;
+        $eligible = ($netAmount >= $minThresholdCents);
 
         return [
-            'gross_amount' => $grossAmount,
+            'gross_amount' => $grossAmountCents,
             'commission' => $commission,
             'amount' => $netAmount,
             'eligible' => $eligible,
-            'minimum_threshold' => $minThreshold,
+            'minimum_threshold' => $minThresholdCents,
         ];
     }
 

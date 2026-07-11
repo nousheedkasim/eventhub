@@ -18,9 +18,9 @@ class Payout extends Model
     ];
 
     protected $casts = [
-        'gross_amount' => 'decimal:2',
-        'commission' => 'decimal:2',
-        'amount' => 'decimal:2',
+        'gross_amount' => 'integer',
+        'commission' => 'integer',
+        'amount' => 'integer',
         'paid_at' => 'datetime',
         'status' => 'string',
     ];

@@ -17,107 +17,80 @@ use App\Http\Controllers\Api\V1\WebhookController;
 use App\Http\Controllers\Api\V1\DisputeController;
 
 // Public routes
+Route::prefix('v1')->group(function () {
+    Route::post('register', [ApiAuthController::class, 'register']);
+    Route::post('login', [ApiAuthController::class, 'login']);
 
-
-
-Route::post('/register', [ApiAuthController::class, 'register']);
-Route::post('/login', [ApiAuthController::class, 'login']);
-
-Route::get('/hello', function () {
-    return response()->json(['message' => 'Hello, World!']);
+    // Public event browsing
+    Route::get('events', [EventController::class, 'index']);
+    Route::get('events/{event}', [EventController::class, 'show']);
+    Route::get('events/{event}/ticket-types', [TicketTypeController::class, 'getByEvent']);
 });
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Authenticated routes
+Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
-
-Route::prefix('v1')
-    ->middleware('auth:sanctum')
-    ->group(function () {
-
-        // Custom route for approving a vendor (Admin only)
-        Route::post('vendors/approve', [VendorController::class, 'approve']);
-
-        Route::apiResource(
-            'events',
-            EventController::class
-        );
-
-        Route::apiResource(
-            'vendors',
-            VendorController::class
-        );
-
-        Route::apiResource(
-            'ticket-type',
-            TicketTypeController::class
-        );
-
-        Route::apiResource(
-            'orders',
-            OrderController::class
-        );
-
-        Route::apiResource(
-            'order-items',
-            OrderItemController::class
-        );
-
-        Route::apiResource(
-            'payments',
-            PaymentController::class
-        );
-
-        Route::apiResource(
-            'refunds',
-            RefundController::class
-        );
-
-        Route::apiResource(
-            'payout-batches',
-            PayoutBatchController::class
-        );
-
-        Route::apiResource(
-            'payouts',
-            PayoutController::class
-        );
-
-        Route::apiResource(
-            'notifications',
-            NotificationController::class
-        );
-
-        Route::apiResource(
-            'webhooks',
-            WebhookController::class
-        );
-
-        Route::apiResource(
-            'disputes',
-            DisputeController::class
-        );
-
-        // Admin-only operations
-        Route::post('disputes/{dispute}/resolve', [DisputeController::class, 'resolve']);
+    // User profile
+    Route::get('user', function (Request $request) {
+        $user = $request->user();
+        if ($user && $user->type === 'vendor') {
+            $user->load('vendor');
+        }
+        return response()->json(['success' => true, 'data' => $user, 'message' => 'User profile retrieved']);
     });
 
-// Webhook callback endpoint for payment microservice status updates
+    // Vendor-only routes
+    Route::middleware('role:vendor')->group(function () {
+        Route::post('events', [EventController::class, 'store']);
+        Route::put('events/{event}', [EventController::class, 'update']);
+        Route::delete('events/{event}', [EventController::class, 'destroy']);
+
+        Route::apiResource('ticket-type', TicketTypeController::class)->except(['index', 'show']);
+
+        Route::post('webhooks/register', [WebhookController::class, 'registerVendorWebhook']);
+        Route::get('webhooks/vendor', [WebhookController::class, 'getVendorWebhooks']);
+    });
+
+    // Attendee-only routes
+    Route::middleware('role:attendee')->group(function () {
+        Route::post('orders', [OrderController::class, 'store']);
+        Route::apiResource('orders', OrderController::class)->except(['store']);
+    });
+
+    // Vendor-only: payments for their orders
+    Route::middleware('role:vendor,attendee')->group(function () {
+        Route::get('orders', [OrderController::class, 'index']);
+    });
+
+    // Payment processing (attendee creates, vendor views own)
+    Route::middleware('role:attendee')->group(function () {
+        Route::post('payments', [PaymentController::class, 'store']);
+    });
+    Route::middleware('role:vendor')->group(function () {
+        Route::get('payments', [PaymentController::class, 'index']);
+        Route::get('payments/{payment}', [PaymentController::class, 'show']);
+    });
+
+    // Vendor-specific data (own data only)
+    Route::middleware('role:vendor')->group(function () {
+        Route::get('payouts', [PayoutController::class, 'index']);
+        Route::get('webhooks', [WebhookController::class, 'index']);
+    });
+
+    // Admin-only routes
+    Route::middleware('role:admin')->group(function () {
+        Route::apiResource('vendors', VendorController::class);
+        Route::post('vendors/{vendor}/approve', [VendorController::class, 'approve']);
+        Route::post('vendors/{vendor}/reject', [VendorController::class, 'reject']);
+
+        Route::apiResource('payout-batches', PayoutBatchController::class);
+        Route::apiResource('refunds', RefundController::class);
+        Route::apiResource('notifications', NotificationController::class);
+        Route::apiResource('disputes', DisputeController::class);
+        Route::post('disputes/{dispute}/resolve', [DisputeController::class, 'resolve']);
+    });
+});
+
+// Payment webhook callback (shared secret auth)
 Route::post('v1/webhooks/payment', [WebhookController::class, 'handlePaymentCallback'])
     ->middleware('shared.secret');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -264,20 +264,20 @@ erDiagram
         timestamp created_at
     }
 
-    USERS ||--o│ VENDORS : "extends_as"
-    USERS ||--o临 TICKET_RESERVATIONS : "creates"
-    USERS ||--o临 WAITLISTS : "joins"
-    USERS ||--o临 ORDERS : "places"
-    VENDORS ||--o临 EVENTS : "owns"
-    VENDORS ||--o临 PAYOUTS : "receives"
-    EVENTS ||--o临 TICKET_TYPES : "contains"
-    EVENTS ||--o临 ORDERS : "collects"
-    TICKET_TYPES ||--o临 TICKET_RESERVATIONS : "leases"
-    TICKET_TYPES ||--o临 WAITLISTS : "tracks"
-    TICKET_TYPES ||--o临 ORDER_ITEMS : "populates"
-    ORDERS ||--o临 ORDER_ITEMS : "details"
-    ORDERS ||--o│ PAYMENTS : "funds"
-    ORDERS ||--o│ REFUNDS : "reverses"
+    USERS ||--o| VENDORS : "extends_as"
+    USERS ||--o{ TICKET_RESERVATIONS : "creates"
+    USERS ||--o{ WAITLISTS : "joins"
+    USERS ||--o{ ORDERS : "places"
+    VENDORS ||--o{ EVENTS : "owns"
+    VENDORS ||--o{ PAYOUTS : "receives"
+    EVENTS ||--o{ TICKET_TYPES : "contains"
+    EVENTS ||--o{ ORDERS : "collects"
+    TICKET_TYPES ||--o{ TICKET_RESERVATIONS : "leases"
+    TICKET_TYPES ||--o{ WAITLISTS : "tracks"
+    TICKET_TYPES ||--o{ ORDER_ITEMS : "populates"
+    ORDERS ||--o{ ORDER_ITEMS : "details"
+    ORDERS ||--o| PAYMENTS : "funds"
+    ORDERS ||--o| REFUNDS : "reverses"
 🧠 Strategic Database Engineering Principles
 1. MySQL Indexing Strategy & Concurrency Guarding
 Composite Query B-Tree Indexes: An explicit index is generated on events(status, start_time) to optimize the frontend catalog queries. For soft deletes, structural tables combine the scope into ticket_types(event_id, deleted_at).

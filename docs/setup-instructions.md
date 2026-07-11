@@ -41,6 +41,8 @@ docker compose up -d core-api --build
 
 The Core API will be available at: `http://localhost:8000`
 
+**Note:** Environment variables are automatically configured by docker-compose.yml. No manual .env setup needed for Docker.
+
 ### Option B: Local Development
 
 If running locally without Docker:
@@ -51,7 +53,7 @@ cd core-api
 cp .env.example .env
 ```
 
-2. Configure database in `.env`:
+2. Configure database in `.env` (uncomment MySQL section):
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -61,6 +63,8 @@ DB_USERNAME=root
 DB_PASSWORD=your_mysql_password
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
+PAYMENT_SERVICE_URL=http://localhost:8001
+PAYMENT_SERVICE_SECRET=secure_shared_secret
 ```
 
 3. Install dependencies:
@@ -88,6 +92,8 @@ docker compose up -d payment-service --build
 
 The Payment Service will be available at: `http://localhost:8001`
 
+**Note:** Environment variables are automatically configured by docker-compose.yml. No manual .env setup needed for Docker.
+
 ### Option B: Local Development
 
 1. Copy environment file:
@@ -96,13 +102,14 @@ cd payment-service
 cp .env.example .env
 ```
 
-2. Configure in `.env`:
+2. Configure in `.env` (add payment service variables):
 ```env
 APP_ENV=local
 PAYMENT_SERVICE_SECRET=secure_shared_secret
 CORE_API_URL=http://localhost:8000
 STRIPE_SUCCESS_RATE=0.9
 PAYPAL_SUCCESS_RATE=0.8
+REDIS_HOST=127.0.0.1
 ```
 
 3. Install dependencies:
@@ -271,16 +278,93 @@ Or use the cron-style scheduler (Linux/Mac):
 * * * * * cd /path-to-eventhub/core-api && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-## 12) Service URLs Summary
+## 12) Start Notification Service (Day 4)
+
+### Option A: Docker (Recommended)
+
+```bash
+docker compose up -d notification-service --build
+```
+
+The Notification Service will be available at: `http://localhost:3002`
+
+**Note:** Environment variables are automatically configured by docker-compose.yml. No manual .env setup needed for Docker.
+
+### Option B: Local Development
+
+1. Copy environment file:
+```bash
+cd notification-service
+cp .env.example .env
+```
+
+2. Configure in `.env` (update Redis host for local):
+```env
+PORT=3002
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+CORE_API_URL=http://localhost:8000
+CORE_API_SECRET=secure_shared_secret
+WEBHOOK_TIMEOUT_MS=5000
+WEBHOOK_MAX_RETRIES=3
+WEBHOOK_RETRY_DELAY_MS=1000
+LOG_LEVEL=info
+```
+
+3. Install dependencies:
+```bash
+npm install
+```
+
+4. Start server:
+```bash
+npm start
+```
+
+## 13) Start Frontend (Day 4)
+
+### Option A: Docker (Recommended)
+
+```bash
+docker compose up -d frontend --build
+```
+
+The Frontend will be available at: `http://localhost:3000`
+
+**Note:** Environment variables are automatically configured by docker-compose.yml. No manual .env setup needed for Docker.
+
+### Option B: Local Development
+
+1. Copy environment file:
+```bash
+cd frontend
+cp .env.example .env
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start development server:
+```bash
+npm run dev
+```
+
+The Frontend will be available at: `http://localhost:3000`
+
+## 14) Service URLs Summary
 
 | Service | URL | Purpose |
 |---------|-----|---------|
 | Core API | http://localhost:8000 | Main marketplace API |
 | Payment Service | http://localhost:8001 | Payment processing |
+| Notification Service | http://localhost:3002 | Email & webhook notifications |
+| Frontend | http://localhost:3000 | Next.js web application |
 | MySQL | localhost:3306 | Database |
 | Redis | localhost:6379 | Cache & Queues |
 
-## 13) Common Issues & Troubleshooting
+## 15) Common Issues & Troubleshooting
 
 ### Issue: "Connection refused" to MySQL
 **Solution:**
@@ -325,7 +409,7 @@ docker compose exec core-api php artisan migrate:fresh
 - Check what's using the ports: `netstat -an | grep <port>`
 - Stop conflicting services or change ports in docker-compose.yml
 
-## 14) Development Workflow
+## 16) Development Workflow
 
 ### Making Changes to Core API
 ```bash
@@ -345,6 +429,26 @@ docker compose up -d payment-service --build
 php artisan serve --port=8001
 ```
 
+### Making Changes to Notification Service
+```bash
+# Rebuild container
+docker compose up -d notification-service --build
+
+# Or restart local server
+cd notification-service
+npm start
+```
+
+### Making Changes to Frontend
+```bash
+# Rebuild container
+docker compose up -d frontend --build
+
+# Or restart local dev server
+cd frontend
+npm run dev
+```
+
 ### Running Tests After Changes
 ```bash
 docker compose exec core-api php artisan test
@@ -358,11 +462,17 @@ docker compose logs -f core-api
 # Payment service logs
 docker compose logs -f payment-service
 
+# Notification service logs
+docker compose logs -f notification-service
+
+# Frontend logs
+docker compose logs -f frontend
+
 # All services
 docker compose logs -f
 ```
 
-## 15) Stopping Services
+## 17) Stopping Services
 
 ```bash
 # Stop all services
@@ -375,7 +485,7 @@ docker compose stop core-api
 docker compose down -v
 ```
 
-## 16) Production Deployment Notes
+## 18) Production Deployment Notes
 
 For production deployment:
 - Change `APP_ENV=production` in all .env files

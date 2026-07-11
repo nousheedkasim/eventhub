@@ -15,34 +15,85 @@ class PayoutServiceTest extends TestCase
         $this->payoutService = $this->app->make(PayoutService::class);
     }
 
-    /**
-     * Test payout calculations, commission deductions, and decimal rounding.
-     */
     public function test_calculate_payout_commission_rounding(): void
     {
-        // Gross amount: $123.45, Commission Rate: 10% (0.10)
-        // Commission = round(123.45 * 0.10, 2) = round(12.345, 2) = 12.35
-        // Net amount = round(123.45 - 12.35, 2) = 111.10
-        $result = $this->payoutService->calculatePayout(123.45, 0.10, 50.00);
+        $result = $this->payoutService->calculatePayout(12345, 0.10, 5000);
 
-        $this->assertEquals(123.45, $result['gross_amount']);
-        $this->assertEquals(12.35, $result['commission']);
-        $this->assertEquals(111.10, $result['amount']);
+        $this->assertEquals(12345, $result['gross_amount']);
+        $this->assertEquals(1235, $result['commission']);
+        $this->assertEquals(11110, $result['amount']);
         $this->assertTrue($result['eligible']);
     }
 
-    /**
-     * Test that minimum payout thresholds are correctly enforced.
-     */
     public function test_calculate_payout_threshold_enforcement(): void
     {
-        // Eligible case: Net amount is equal to or greater than minimum threshold
-        $eligibleResult = $this->payoutService->calculatePayout(100.00, 0.10, 90.00);
+        $eligibleResult = $this->payoutService->calculatePayout(10000, 0.10, 9000);
         $this->assertTrue($eligibleResult['eligible']);
 
-        // Ineligible case: Net amount is less than minimum threshold
-        // Gross: $50.00, Commission Rate: 10% (0.10) -> Net: $45.00. Threshold: $50.00
-        $ineligibleResult = $this->payoutService->calculatePayout(50.00, 0.10, 50.00);
+        $ineligibleResult = $this->payoutService->calculatePayout(5000, 0.10, 5000);
         $this->assertFalse($ineligibleResult['eligible']);
+    }
+
+    public function test_zero_commission_rate(): void
+    {
+        $result = $this->payoutService->calculatePayout(50000, 0.0, 10000);
+
+        $this->assertEquals(0, $result['commission']);
+        $this->assertEquals(50000, $result['amount']);
+        $this->assertTrue($result['eligible']);
+    }
+
+    public function test_full_commission_rate(): void
+    {
+        $result = $this->payoutService->calculatePayout(20000, 1.0, 5000);
+
+        $this->assertEquals(20000, $result['commission']);
+        $this->assertEquals(0, $result['amount']);
+        $this->assertFalse($result['eligible']);
+    }
+
+    public function test_zero_gross_amount(): void
+    {
+        $result = $this->payoutService->calculatePayout(0, 0.10, 5000);
+
+        $this->assertEquals(0, $result['gross_amount']);
+        $this->assertEquals(0, $result['commission']);
+        $this->assertEquals(0, $result['amount']);
+        $this->assertFalse($result['eligible']);
+    }
+
+    public function test_zero_threshold_always_eligible(): void
+    {
+        $result = $this->payoutService->calculatePayout(1000, 0.10, 0);
+
+        $this->assertEquals(900, $result['amount']);
+        $this->assertTrue($result['eligible']);
+    }
+
+    public function test_commission_rounding_accuracy(): void
+    {
+        $testCases = [
+            ['gross' => 3333, 'rate' => 0.15, 'expected_commission' => 500, 'expected_net' => 2833],
+            ['gross' => 9999, 'rate' => 0.15, 'expected_commission' => 1500, 'expected_net' => 8499],
+            ['gross' => 101, 'rate' => 0.30, 'expected_commission' => 30, 'expected_net' => 71],
+        ];
+
+        foreach ($testCases as $case) {
+            $result = $this->payoutService->calculatePayout($case['gross'], $case['rate'], 0);
+            $this->assertEquals($case['expected_commission'], $result['commission'], "Commission mismatch for gross {$case['gross']}");
+            $this->assertEquals($case['expected_net'], $result['amount'], "Net mismatch for gross {$case['gross']}");
+        }
+    }
+
+    public function test_threshold_boundary_exact_match(): void
+    {
+        $result = $this->payoutService->calculatePayout(10000, 0.10, 9000);
+        $this->assertTrue($result['eligible']);
+
+        $result = $this->payoutService->calculatePayout(9999, 0.10, 9000);
+        $this->assertFalse($result['eligible']);
+
+        $result = $this->payoutService->calculatePayout(10100, 0.10, 9100);
+        $this->assertFalse($result['eligible']);
     }
 }

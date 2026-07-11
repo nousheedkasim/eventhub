@@ -12,6 +12,7 @@ use App\Models\OrderEvent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class RefundService
 {
@@ -30,14 +31,14 @@ class RefundService
     public function create(array $data)
     {
         $paymentId = $data['payment_id'];
-        $amount = (float) $data['amount'];
+        $amount = (int) $data['amount'];
         $reason = $data['reason'] ?? null;
 
         // 1. Fetch Payment and related Order details
         $payment = Payment::with('order.items.ticketType.event')->findOrFail($paymentId);
 
         if ($payment->status !== 'paid') {
-            throw new \RuntimeException("Refunds can only be processed for successful payments.", 422);
+            throw new HttpException(422, "Refunds can only be processed for successful payments.");
         }
 
         // Calculate already refunded amount to support partial refunds
@@ -45,8 +46,8 @@ class RefundService
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
-        if (($alreadyRefunded + $amount) > (float) $payment->amount) {
-            throw new \RuntimeException("Requested refund amount exceeds the original payment value.", 422);
+        if (($alreadyRefunded + $amount) > $payment->amount) {
+            throw new HttpException(422, "Requested refund amount exceeds the original payment value.");
         }
 
         return DB::transaction(function () use ($payment, $amount, $reason) {
@@ -85,7 +86,7 @@ class RefundService
                 ]);
 
                 if ($response->failed()) {
-                    throw new \RuntimeException("Payment microservice refund call failed: " . $response->body(), $response->status());
+                    throw new HttpException($response->status(), "Payment microservice refund call failed: " . $response->body());
                 }
 
                 $responseData = $response->json();
@@ -163,7 +164,7 @@ class RefundService
                 ]);
 
                 Log::error("Failed to execute refund for Payment #{$payment->id}: " . $e->getMessage());
-                throw new \RuntimeException("Refund execution failed: " . $e->getMessage(), 500);
+                throw new HttpException(500, "Refund execution failed: " . $e->getMessage());
             }
         });
     }

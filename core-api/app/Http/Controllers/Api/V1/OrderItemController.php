@@ -16,27 +16,30 @@ class OrderItemController extends Controller
 
     public function index()
     {
-        return response()->json($this->orderItemService->getAll());
+        return response()->json(['success' => true, 'data' => $this->orderItemService->getAll(), 'message' => 'Retrieved successfully']);
     }
 
     public function store(StoreOrderItemRequest $request)
     {
-        return response()->json(
-            $this->orderItemService->create($request->validated()),
-            201
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->orderItemService->create($request->validated()),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
     public function show(OrderItem $orderItem)
     {
-        return response()->json($orderItem);
+        return response()->json(['success' => true, 'data' => $orderItem, 'message' => 'Retrieved successfully']);
     }
 
     public function update(UpdateOrderItemRequest $request, OrderItem $orderItem)
     {
-        return response()->json(
-            $this->orderItemService->update($orderItem->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->orderItemService->update($orderItem->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     public function destroy(OrderItem $orderItem)
@@ -44,7 +47,9 @@ class OrderItemController extends Controller
         $this->orderItemService->delete($orderItem->id);
 
         return response()->json([
-            'message' => 'Order item deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 }

@@ -24,20 +24,21 @@ class DisputeController extends Controller
 
     public function index()
     {
-        return response()->json($this->disputeService->getAll());
+        return response()->json(['success' => true, 'data' => $this->disputeService->getAll(), 'message' => 'Retrieved successfully']);
     }
 
     public function store(StoreDisputeRequest $request)
     {
-        return response()->json(
-            $this->disputeService->create($request->validated()),
-            201
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->disputeService->create($request->validated()),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
     public function show(Dispute $dispute)
     {
-        return response()->json($dispute);
+        return response()->json(['success' => true, 'data' => $dispute, 'message' => 'Retrieved successfully']);
     }
 
     // Admin only
@@ -52,9 +53,11 @@ class DisputeController extends Controller
             'resolved_at' => ['sometimes', 'nullable', 'date'],
         ]);
 
-        return response()->json(
-            $this->disputeService->update($dispute->id, $validated)
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->disputeService->update($dispute->id, $validated),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     // Admin only
@@ -65,7 +68,9 @@ class DisputeController extends Controller
         $this->disputeService->delete($dispute->id);
 
         return response()->json([
-            'message' => 'Dispute deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 
@@ -86,9 +91,11 @@ class DisputeController extends Controller
             'resolved_at' => $validated['resolved_at'] ?? now(),
         ];
 
-        return response()->json(
-            $this->disputeService->update($dispute->id, $payload)
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->disputeService->update($dispute->id, $payload),
+            'message' => 'Dispute resolved successfully',
+        ]);
     }
 }
 

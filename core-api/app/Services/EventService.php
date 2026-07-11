@@ -15,6 +15,11 @@ class EventService
         return $this->repository->all();
     }
 
+    public function getByVendor($vendorId)
+    {
+        return $this->repository->getByVendor($vendorId);
+    }
+
     public function create(array $data)
     {
         return $this->repository->create($data);

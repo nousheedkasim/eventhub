@@ -1,10 +1,32 @@
 {
   "name": "eventhub-notification",
-  "description": "AI skill for the EventHub notification microservice.",
+  "description": "AI skill for the EventHub notification microservice (Node.js + Bull).",
   "workspace": "notification-service",
   "entrypoints": [
-    "notification-service/app/Jobs/",
-    "notification-service/app/Services/"
+    "notification-service/src/server.js",
+    "notification-service/src/workers/emailWorker.js",
+    "notification-service/src/workers/webhookWorker.js",
+    "notification-service/src/services/emailService.js",
+    "notification-service/src/services/webhookService.js",
+    "notification-service/src/queues/notificationQueue.js",
+    "notification-service/src/utils/logger.js",
+    "notification-service/src/utils/deadLetterStore.js"
+  ],
+  "commands": {
+    "start": "cd notification-service && node src/server.js",
+    "test": "cd notification-service && npx jest --verbose",
+    "install": "cd notification-service && npm install"
+  },
+  "notes": [
+    "Queue-driven service using Bull (Redis) for async job processing.",
+    "Two queues: email-notifications (concurrency 5) and webhook-notifications (concurrency 3).",
+    "Email notifications are simulated (logged to console, no SMTP).",
+    "Email types: order_confirmation, event_reminder, payout_notification, vendor_approval.",
+    "Webhook delivery to vendors with exponential backoff retry (max 5 attempts).",
+    "4xx client errors are NOT retried; 5xx errors and timeouts are retried.",
+    "Dead-letter store: failed jobs persisted as JSON files to data/dead-letter/ directory.",
+    "Core API publishes jobs to Redis queues; this service consumes them.",
+    "Express server exposes GET /health and GET /dead-letter endpoints.",
+    "HMAC-SHA256 signatures on webhook payloads using CORE_API_SECRET."
   ]
 }
-

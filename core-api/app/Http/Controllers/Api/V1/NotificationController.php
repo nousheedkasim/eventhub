@@ -16,27 +16,30 @@ class NotificationController extends Controller
 
     public function index()
     {
-        return response()->json($this->notificationService->getAll());
+        return response()->json(['success' => true, 'data' => $this->notificationService->getAll(), 'message' => 'Retrieved successfully']);
     }
 
     public function store(StoreNotificationRequest $request)
     {
-        return response()->json(
-            $this->notificationService->create($request->validated()),
-            201
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->notificationService->create($request->validated()),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
     public function show(Notification $notification)
     {
-        return response()->json($notification);
+        return response()->json(['success' => true, 'data' => $notification, 'message' => 'Retrieved successfully']);
     }
 
     public function update(UpdateNotificationRequest $request, Notification $notification)
     {
-        return response()->json(
-            $this->notificationService->update($notification->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->notificationService->update($notification->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     public function destroy(Notification $notification)
@@ -44,7 +47,9 @@ class NotificationController extends Controller
         $this->notificationService->delete($notification->id);
 
         return response()->json([
-            'message' => 'Notification deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 }

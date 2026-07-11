@@ -4,20 +4,37 @@
   "workspace": "core-api",
   "entrypoints": [
     "core-api/routes/api.php",
+    "core-api/bootstrap/app.php",
     "core-api/app/Http/Controllers/",
+    "core-api/app/Http/Middleware/",
     "core-api/app/Services/",
+    "core-api/app/Repositories/",
+    "core-api/app/Repositories/Contracts/",
+    "core-api/app/Models/",
+    "core-api/app/Console/Commands/",
     "core-api/database/migrations/",
-    "core-api/database/seeders/"
+    "core-api/database/seeders/",
+    "core-api/tests/"
   ],
   "commands": {
-    "test": "cd core-api && php artisan test",
-    "migrate": "cd core-api && php artisan migrate",
-    "seed": "cd core-api && php artisan db:seed",
-    "route:list": "cd core-api && php artisan route:list"
+    "test": "docker compose exec core-api php artisan test",
+    "migrate": "docker compose exec core-api php artisan migrate",
+    "seed": "docker compose exec core-api php artisan db:seed",
+    "route:list": "docker compose exec core-api php artisan route:list",
+    "tinker": "docker compose exec core-api php artisan tinker"
   },
   "notes": [
-    "Core API uses Laravel 11." ,
-    "Business logic belongs in core-api/app/Services and data access in core-api/app/Repositories."
+    "Core API uses Laravel 11 with PHP 8.2+.",
+    "Layered architecture: Controller -> Service -> Repository -> Model.",
+    "Business logic belongs in core-api/app/Services, NOT in controllers.",
+    "Data access is abstracted through Repositories (app/Repositories/) bound to Contracts (app/Repositories/Contracts/).",
+    "All monetary values MUST be stored as integer cents (DECIMAL columns exist but should be migrated to unsignedBigInteger).",
+    "All API responses must follow {success: bool, data: mixed, message: string} format.",
+    "Financial operations require idempotency and audit trails via financial_event_logs table.",
+    "Redis distributed locking used for concurrent ticket purchases (Cache::lock).",
+    "Role-based access via RequireRole middleware (admin, vendor, attendee).",
+    "Inter-service authentication via VerifySharedSecret middleware on payment webhook routes.",
+    "5 background commands: holds:cleanup, sales:generate-reports, payouts:process-batches, reminders:send-events, waitlist:process.",
+    "Soft deletes on events and ticket_types; hard deletes on ticket_reservations."
   ]
 }
-

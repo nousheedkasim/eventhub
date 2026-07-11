@@ -12,6 +12,11 @@ class PayoutRepository implements PayoutRepositoryInterface
         return Payout::query()->paginate(15);
     }
 
+    public function getByVendor($vendorId)
+    {
+        return Payout::where('vendor_id', $vendorId)->paginate(15);
+    }
+
     public function find($id)
     {
         return Payout::findOrFail($id);

@@ -1,0 +1,50 @@
+{
+  "name": "eventhub-frontend",
+  "description": "AI skill for the EventHub frontend (Next.js 14 App Router).",
+  "workspace": "frontend",
+  "entrypoints": [
+    "frontend/app/layout.tsx",
+    "frontend/app/page.tsx",
+    "frontend/app/login/page.tsx",
+    "frontend/app/events/page.tsx",
+    "frontend/app/events/[id]/page.tsx",
+    "frontend/app/checkout/page.tsx",
+    "frontend/app/orders/page.tsx",
+    "frontend/app/attendee/page.tsx",
+    "frontend/app/vendor/page.tsx",
+    "frontend/app/vendor/dashboard/page.tsx",
+    "frontend/app/vendor/events/page.tsx",
+    "frontend/app/vendor/events/create/page.tsx",
+    "frontend/app/vendor/payout/page.tsx",
+    "frontend/app/admin/layout.tsx",
+    "frontend/app/admin/page.tsx",
+    "frontend/app/admin/dashboard/page.tsx",
+    "frontend/app/admin/vendor/page.tsx",
+    "frontend/app/admin/events/page.tsx",
+    "frontend/app/admin/reports/page.tsx",
+    "frontend/app/admin/disputes/page.tsx",
+    "frontend/lib/api.ts",
+    "frontend/lib/store.ts",
+    "frontend/components/Header.tsx",
+    "frontend/components/ui/button.tsx"
+  ],
+  "commands": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "lint": "cd frontend && npm run lint",
+    "install": "cd frontend && npm install"
+  },
+  "notes": [
+    "Next.js 14 App Router with Tailwind CSS.",
+    "State management via Zustand (useAuthStore + useCartStore in lib/store.ts).",
+    "API client in lib/api.ts with Axios, 401 interceptor clears token and redirects to /login.",
+    "Auth tokens stored in localStorage, sent as Authorization: Bearer header.",
+    "Three role sections: /admin (login + dashboard + vendors + events + reports + disputes), /vendor (login + dashboard + events + payout), /events (public browse).",
+    "API responses expect {success, data, message} format from core-api.",
+    "Attendee flow: /events -> /events/[id] (ticket selection) -> /checkout -> /orders.",
+    "Vendor flow: /vendor (register/login) -> /vendor/dashboard -> /vendor/events/create -> /vendor/payout.",
+    "Admin flow: /admin (login) -> /admin/dashboard -> /admin/vendor (approve/reject) -> /admin/disputes.",
+    "Frontend runs in Docker via npm run dev (not production build) to avoid stale .next cache issues.",
+    "All pages handle loading states and API errors with try/catch blocks."
+  ]
+}

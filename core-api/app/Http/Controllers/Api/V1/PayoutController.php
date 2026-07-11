@@ -14,29 +14,37 @@ class PayoutController extends Controller
         private PayoutService $payoutService
     ) {}
 
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        return response()->json($this->payoutService->getAll());
+        if ($request->has('vendor_id')) {
+            $payouts = $this->payoutService->getByVendor($request->vendor_id);
+            return response()->json(['success' => true, 'data' => $payouts, 'message' => 'Retrieved successfully']);
+        }
+        $payouts = $this->payoutService->getAll();
+        return response()->json(['success' => true, 'data' => $payouts, 'message' => 'Retrieved successfully']);
     }
 
     public function store(StorePayoutRequest $request)
     {
-        return response()->json(
-            $this->payoutService->create($request->validated()),
-            201
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->payoutService->create($request->validated()),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
     public function show(Payout $payout)
     {
-        return response()->json($payout);
+        return response()->json(['success' => true, 'data' => $payout, 'message' => 'Retrieved successfully']);
     }
 
     public function update(UpdatePayoutRequest $request, Payout $payout)
     {
-        return response()->json(
-            $this->payoutService->update($payout->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->payoutService->update($payout->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     public function destroy(Payout $payout)
@@ -44,7 +52,9 @@ class PayoutController extends Controller
         $this->payoutService->delete($payout->id);
 
         return response()->json([
-            'message' => 'Payout deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 }

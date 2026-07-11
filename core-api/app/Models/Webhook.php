@@ -10,7 +10,9 @@ class Webhook extends Model
         'vendor_id',
         'url',
         'secret',
+        'events',
         'active',
+        'is_active',
     ];
 
     protected $casts = [

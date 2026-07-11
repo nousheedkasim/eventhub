@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class OrderService
 {
@@ -21,6 +22,11 @@ class OrderService
     public function getAll()
     {
         return $this->repository->all();
+    }
+
+    public function getByVendor($vendorId)
+    {
+        return $this->repository->getByVendor($vendorId);
     }
 
     /**
@@ -49,7 +55,7 @@ class OrderService
                 foreach ($locks as $l) {
                     $l->release();
                 }
-                throw new \RuntimeException("Could not acquire lock for ticket inventory. Please try again.", 409);
+                throw new HttpException(409, "Could not acquire lock for ticket inventory. Please try again.");
             }
 
             // 2. Perform inventory check and reservation inside DB transaction
@@ -65,40 +71,41 @@ class OrderService
                     $now = now();
                     // Check if ticket type is active and in its availability window
                     if (!$ticketType->is_active) {
-                        throw new \RuntimeException("Ticket type '{$ticketType->type}' is currently inactive.", 422);
+                        throw new HttpException(422, "Ticket type '{$ticketType->type}' is currently inactive.");
                     }
 
                     if ($now->lt($ticketType->available_from) || $now->gt($ticketType->available_until)) {
-                        throw new \RuntimeException("Ticket type '{$ticketType->type}' is outside its availability window.", 422);
+                        throw new HttpException(422, "Ticket type '{$ticketType->type}' is outside its availability window.");
                     }
 
                     // Check capacity limits
                     $availableInventory = $ticketType->inventory - $ticketType->sold_count;
                     if ($availableInventory < $item['qty']) {
-                        throw new \RuntimeException("Insufficient inventory for '{$ticketType->type}'. Available: {$availableInventory}, requested: {$item['qty']}.", 422);
+                        throw new HttpException(422, "Insufficient inventory for '{$ticketType->type}'. Available: {$availableInventory}, requested: {$item['qty']}.");
                     }
 
-                    // 3. Apply group bundle and early-bird dynamic pricing
-                    $originalPrice = (float) $ticketType->price;
-                    $discount = 0.0;
+                    // 3. Apply group bundle and early-bird dynamic pricing (all values in cents)
+                    $originalPrice = $ticketType->price;
+                    $discountBps = 0; // basis points (100 = 1%)
                     $appliedPolicies = [];
 
                     // Early-bird: purchase made >= 14 days before event date
                     $eventDate = Carbon::parse($ticketType->event->event_date);
                     $daysToEvent = $now->diffInDays($eventDate, false);
                     if ($daysToEvent >= 14) {
-                        $discount += 0.10; // 10% discount
+                        $discountBps += 1000; // 10%
                         $appliedPolicies[] = "Early Bird 10%";
                     }
 
                     // Group bundle: buy 4 or more tickets in total (or 4 of this type)
                     $totalQty = $items->sum('qty');
                     if ($totalQty >= 4 || $item['qty'] >= 4) {
-                        $discount += 0.20; // 20% discount
+                        $discountBps += 2000; // 20%
                         $appliedPolicies[] = "Group Bundle 20%";
                     }
 
-                    $finalPrice = $originalPrice * (1.0 - $discount);
+                    // Price in cents: original * (10000 - discountBps) / 10000
+                    $finalPrice = (int) round($originalPrice * (10000 - $discountBps) / 10000);
 
                     // 4. Decrement available inventory (by incrementing sold_count)
                     $ticketType->sold_count += $item['qty'];

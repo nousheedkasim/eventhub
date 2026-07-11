@@ -1,0 +1,18 @@
+{
+  "/events/[id]/page": "app/events/[id]/page.js",
+  "/vendor/payout/page": "app/vendor/payout/page.js",
+  "/login/page": "app/login/page.js",
+  "/checkout/page": "app/checkout/page.js",
+  "/page": "app/page.js",
+  "/orders/page": "app/orders/page.js",
+  "/vendor/page": "app/vendor/page.js",
+  "/events/page": "app/events/page.js",
+  "/vendor/events/page": "app/vendor/events/page.js",
+  "/vendor/dashboard/page": "app/vendor/dashboard/page.js",
+  "/admin/reports/page": "app/admin/reports/page.js",
+  "/admin/dashboard/page": "app/admin/dashboard/page.js",
+  "/admin/vendor/page": "app/admin/vendor/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/events/page": "app/admin/events/page.js",
+  "/admin/disputes/page": "app/admin/disputes/page.js"
+}

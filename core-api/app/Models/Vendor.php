@@ -51,4 +51,14 @@ class Vendor extends Model
     {
         return $this->hasMany(Event::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'email', 'email');
+    }
+
+    public function payouts()
+    {
+        return $this->hasMany(Payout::class);
+    }
 }

@@ -16,27 +16,30 @@ class PayoutBatchController extends Controller
 
     public function index()
     {
-        return response()->json($this->payoutBatchService->getAll());
+        return response()->json(['success' => true, 'data' => $this->payoutBatchService->getAll(), 'message' => 'Retrieved successfully']);
     }
 
     public function store(StorePayoutBatchRequest $request)
     {
-        return response()->json(
-            $this->payoutBatchService->create($request->validated()),
-            201
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->payoutBatchService->create($request->validated()),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
     public function show(PayoutBatch $payoutBatch)
     {
-        return response()->json($payoutBatch);
+        return response()->json(['success' => true, 'data' => $payoutBatch, 'message' => 'Retrieved successfully']);
     }
 
     public function update(UpdatePayoutBatchRequest $request, PayoutBatch $payoutBatch)
     {
-        return response()->json(
-            $this->payoutBatchService->update($payoutBatch->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->payoutBatchService->update($payoutBatch->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     public function destroy(PayoutBatch $payoutBatch)
@@ -44,7 +47,9 @@ class PayoutBatchController extends Controller
         $this->payoutBatchService->delete($payoutBatch->id);
 
         return response()->json([
-            'message' => 'Payout batch deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 }

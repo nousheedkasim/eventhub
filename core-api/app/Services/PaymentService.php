@@ -10,6 +10,7 @@ use App\Models\OrderEvent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class PaymentService
 {
@@ -29,12 +30,12 @@ class PaymentService
     {
         $orderId = $data['order_id'];
         $gateway = $data['gateway'];
-        $idempotencyKey = $data['idempotency_key'] ?? 'pay_key_' . $orderId . '_' . uniqid();
+        $idempotencyKey = $data['idempotency_key'] ?? 'pay_key_' . $orderId;
 
         // 1. Fetch Order and verify status
         $order = Order::findOrFail($orderId);
         if ($order->status !== 'held') {
-            throw new \RuntimeException("Payment can only be processed for orders that are currently held.", 422);
+            throw new HttpException(422, "Payment can only be processed for orders that are currently held.");
         }
 
         // 2. Check if a payment for this order already exists
@@ -89,7 +90,7 @@ class PaymentService
                     ]);
 
                 if ($response->failed()) {
-                    throw new \RuntimeException("Payment service responded with error: " . $response->body(), $response->status());
+                    throw new HttpException($response->status(), "Payment service responded with error: " . $response->body());
                 }
 
                 $responseData = $response->json();
@@ -126,7 +127,7 @@ class PaymentService
                 ]);
 
                 Log::error("Failed to initiate payment for Order #{$order->id}: " . $e->getMessage());
-                throw new \RuntimeException("Payment microservice call failed: " . $e->getMessage(), 500);
+                throw new HttpException(502, "Payment microservice call failed: " . $e->getMessage());
             }
         });
     }

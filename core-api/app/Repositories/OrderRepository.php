@@ -12,6 +12,14 @@ class OrderRepository implements OrderRepositoryInterface
         return Order::query()->paginate(15);
     }
 
+    public function getByVendor($vendorId)
+    {
+        return Order::with(['items.ticketType.event'])
+            ->whereHas('items.ticketType.event', function ($query) use ($vendorId) {
+                $query->where('vendor_id', $vendorId);
+            })->paginate(15);
+    }
+
     public function find($id)
     {
         return Order::findOrFail($id);

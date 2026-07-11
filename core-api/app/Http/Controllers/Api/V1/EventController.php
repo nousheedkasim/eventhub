@@ -17,11 +17,14 @@ class EventController extends Controller
     /**
      * Display a listing of events.
      */
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        return response()->json(
-            $this->eventService->getAll()
-        );
+        if ($request->has('vendor_id')) {
+            $events = $this->eventService->getByVendor($request->vendor_id);
+            return response()->json(['success' => true, 'data' => $events, 'message' => 'Retrieved successfully']);
+        }
+        $events = $this->eventService->getAll();
+        return response()->json(['success' => true, 'data' => $events, 'message' => 'Retrieved successfully']);
     }
 
 
@@ -30,12 +33,23 @@ class EventController extends Controller
      */
     public function store(StoreEventRequest $request)
     {
-        return response()->json(
-            $this->eventService->create(
-                $request->validated()
-            ),
-            201
-        );
+        $data = $request->validated();
+        
+        $user = $request->user();
+        if ($user && $user->type === 'vendor') {
+            if (!$user->relationLoaded('vendor')) {
+                $user->load('vendor');
+            }
+            if ($user->vendor) {
+                $data['vendor_id'] = $user->vendor->id;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->eventService->create($data),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
 
@@ -44,7 +58,7 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        return response()->json($event);
+        return response()->json(['success' => true, 'data' => $event, 'message' => 'Retrieved successfully']);
     }
 
 
@@ -55,12 +69,14 @@ class EventController extends Controller
         UpdateEventRequest $request,
         Event $event
     ) {
-        return response()->json(
-            $this->eventService->update(
+        return response()->json([
+            'success' => true,
+            'data' => $this->eventService->update(
                 $event->id,
                 $request->validated()
-            )
-        );
+            ),
+            'message' => 'Updated successfully',
+        ]);
     }
 
 
@@ -72,7 +88,9 @@ class EventController extends Controller
         $this->eventService->delete($event->id);
 
         return response()->json([
-            'message' => 'Event deleted successfully'
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 }

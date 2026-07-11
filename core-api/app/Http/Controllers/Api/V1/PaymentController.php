@@ -17,27 +17,31 @@ class PaymentController extends Controller
 
     public function index()
     {
-        return response()->json($this->paymentService->getAll());
+        return response()->json(['success' => true, 'data' => $this->paymentService->getAll(), 'message' => 'Retrieved successfully']);
     }
 
     public function store(StorePaymentRequest $request)
     {
-        return response()->json(
-            $this->paymentService->create($request->validated()),
-            201
-        );
+        $payment = $this->paymentService->create($request->validated());
+        return response()->json([
+            'success' => true,
+            'data' => $payment,
+            'message' => 'Payment initiated successfully',
+        ], 201);
     }
 
     public function show(Payment $payment)
     {
-        return response()->json($payment);
+        return response()->json(['success' => true, 'data' => $payment, 'message' => 'Retrieved successfully']);
     }
 
     public function update(UpdatePaymentRequest $request, Payment $payment)
     {
-        return response()->json(
-            $this->paymentService->update($payment->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->paymentService->update($payment->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     public function destroy(Payment $payment)
@@ -45,7 +49,9 @@ class PaymentController extends Controller
         $this->paymentService->delete($payment->id);
 
         return response()->json([
-            'message' => 'Payment deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 }

@@ -14,29 +14,38 @@ class OrderController extends Controller
         private OrderService $orderService
     ) {}
 
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        return response()->json($this->orderService->getAll());
+        if ($request->has('vendor_id')) {
+            $orders = $this->orderService->getByVendor($request->vendor_id);
+            return response()->json(['success' => true, 'data' => $orders, 'message' => 'Retrieved successfully']);
+        }
+        $orders = $this->orderService->getAll();
+        return response()->json(['success' => true, 'data' => $orders, 'message' => 'Retrieved successfully']);
     }
 
     public function store(StoreOrderRequest $request)
     {
-        return response()->json(
-            $this->orderService->create($request->validated()),
-            201
-        );
+        $order = $this->orderService->create($request->validated());
+        return response()->json([
+            'success' => true,
+            'data' => $order,
+            'message' => 'Order created successfully',
+        ], 201);
     }
 
     public function show(Order $order)
     {
-        return response()->json($order);
+        return response()->json(['success' => true, 'data' => $order, 'message' => 'Retrieved successfully']);
     }
 
     public function update(UpdateOrderRequest $request, Order $order)
     {
-        return response()->json(
-            $this->orderService->update($order->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->orderService->update($order->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     public function destroy(Order $order)
@@ -44,7 +53,9 @@ class OrderController extends Controller
         $this->orderService->delete($order->id);
 
         return response()->json([
-            'message' => 'Order deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 }

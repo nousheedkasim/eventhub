@@ -19,7 +19,7 @@ class Payment extends Model
 
     protected $casts = [
         'status' => 'string',
-        'amount' => 'decimal:2',
+        'amount' => 'integer',
         'paid_at' => 'datetime',
     ];
 

@@ -16,27 +16,39 @@ class TicketTypeController extends Controller
 
     public function index()
     {
-        return response()->json($this->ticketTypeService->getAll());
+        return response()->json(['success' => true, 'data' => $this->ticketTypeService->getAll(), 'message' => 'Retrieved successfully']);
     }
 
     public function store(StoreTicketTypeRequest $request)
     {
-        return response()->json(
-            $this->ticketTypeService->create($request->validated()),
-            201
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->ticketTypeService->create($request->validated()),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
     public function show(TicketType $ticketType)
     {
-        return response()->json($ticketType);
+        return response()->json(['success' => true, 'data' => $ticketType, 'message' => 'Retrieved successfully']);
+    }
+
+    public function getByEvent($eventId)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->ticketTypeService->getByEvent($eventId),
+            'message' => 'Retrieved successfully',
+        ]);
     }
 
     public function update(UpdateTicketTypeRequest $request, TicketType $ticketType)
     {
-        return response()->json(
-            $this->ticketTypeService->update($ticketType->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->ticketTypeService->update($ticketType->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     public function destroy(TicketType $ticketType)
@@ -44,7 +56,9 @@ class TicketTypeController extends Controller
         $this->ticketTypeService->delete($ticketType->id);
 
         return response()->json([
-            'message' => 'Ticket type deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 }

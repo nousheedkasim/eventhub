@@ -1,10 +1,24 @@
 {
   "name": "eventhub-payment",
-  "description": "AI skill for the EventHub payment microservice.",
+  "description": "AI skill for the EventHub payment microservice (Laravel).",
   "workspace": "payment-service",
   "entrypoints": [
-    "payment-service/routes/",
-    "payment-service/app/"
+    "payment-service/routes/api.php",
+    "payment-service/app/Http/Controllers/PaymentController.php",
+    "payment-service/app/Services/Gateways/",
+    "payment-service/app/Jobs/SendWebhookCallbackJob.php",
+    "payment-service/database/migrations/"
+  ],
+  "commands": {
+    "serve": "cd payment-service && php artisan serve --port=8001",
+    "migrate": "cd payment-service && php artisan migrate",
+    "test": "cd payment-service && php artisan test"
+  },
+  "notes": [
+    "Payment service simulates Stripe and PayPal gateways with configurable success rates.",
+    "Shared secret authentication via VerifySharedSecret middleware for all endpoints.",
+    "Idempotency keys prevent duplicate charges on retry.",
+    "Time-based refund policy: full (>48h), 50% (24-48h), none (<24h).",
+    "Webhook callbacks sent to core-api after processing via SendWebhookCallbackJob."
   ]
 }
-

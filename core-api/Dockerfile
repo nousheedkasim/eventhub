@@ -13,6 +13,12 @@ RUN apt-get update && apt-get install -y \
 # Enable mod_rewrite for Laravel routing
 RUN a2enmod rewrite
 
+# Point DocumentRoot to Laravel public directory
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-enabled/000-default.conf
+
+# Allow .htaccess overrides
+RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
+
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -32,4 +38,4 @@ COPY . .
 # Permissions for storage
 RUN chown -R www-data:www-data storage bootstrap/cache || true
 
-EXPOSE 8000
+EXPOSE 80

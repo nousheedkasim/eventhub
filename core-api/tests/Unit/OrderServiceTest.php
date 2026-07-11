@@ -59,7 +59,7 @@ class OrderServiceTest extends TestCase
         $this->ticketType = TicketType::create([
             'event_id' => $this->event->id,
             'type' => 'General Admission',
-            'price' => 100.00,
+            'price' => 10000,
             'inventory' => 50,
             'sold_count' => 0,
             'available_from' => now()->subDays(1),
@@ -86,8 +86,8 @@ class OrderServiceTest extends TestCase
         $this->assertInstanceOf(Order::class, $order);
         $this->assertEquals('held', $order->status);
         
-        // 2 tickets * $100 = $200. Early Bird gives 10% discount: $180.
-        $this->assertEquals(180.00, (float) $order->total_amount);
+        // 2 tickets * 10000 cents = 20000. Early Bird 10% discount = 18000.
+        $this->assertEquals(18000, $order->total_amount);
 
         // Verify ticket type inventory decremented (sold_count incremented)
         $this->ticketType->refresh();
@@ -116,10 +116,10 @@ class OrderServiceTest extends TestCase
             ]
         ]);
 
-        // 4 tickets * $100 = $400.
+        // 4 tickets * 10000 = 40000.
         // Early Bird 10% + Group Bundle 20% = 30% discount.
-        // Final: $400 * 0.70 = $280.
-        $this->assertEquals(280.00, (float) $order->total_amount);
+        // Final: 40000 * 0.70 = 28000.
+        $this->assertEquals(28000, $order->total_amount);
 
         $this->ticketType->refresh();
         $this->assertEquals(4, $this->ticketType->sold_count);
@@ -207,9 +207,9 @@ class OrderServiceTest extends TestCase
                     ]
                 ]
             ]);
-            $this->fail("Expected RuntimeException was not thrown.");
-        } catch (\RuntimeException $e) {
-            $this->assertEquals(409, $e->getCode());
+            $this->fail("Expected HttpException was not thrown.");
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertEquals(409, $e->getStatusCode());
             $this->assertStringContainsString("Could not acquire lock", $e->getMessage());
         }
 

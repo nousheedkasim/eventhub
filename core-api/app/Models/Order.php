@@ -15,7 +15,7 @@ class Order extends Model
 
     protected $casts = [
         'status' => 'string',
-        'total_amount' => 'decimal:2',
+        'total_amount' => 'integer',
         'hold_expires_at' => 'datetime',
     ];
 
@@ -27,6 +27,11 @@ class Order extends Model
     public function events()
     {
         return $this->hasMany(OrderEvent::class);
+    }
+
+    public function event()
+    {
+        return $this->hasOneThrough(Event::class, OrderItem::class, 'order_id', 'id', 'id', 'ticket_type_id');
     }
 }
 

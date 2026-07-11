@@ -6,6 +6,8 @@ interface PayoutRepositoryInterface
 {
     public function all();
 
+    public function getByVendor($vendorId);
+
     public function find($id);
 
     public function create(array $data);

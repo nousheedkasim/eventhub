@@ -1,0 +1,185 @@
+erDiagram
+    USERS {
+        bigint_unsigned id PK
+        string name
+        string email UK
+        string password
+        string type "admin|vendor|attendee"
+        timestamp created_at
+        timestamp updated_at
+    }
+    VENDORS {
+        bigint_unsigned id PK
+        bigint_unsigned user_id FK
+        string company_name
+        string contact_name
+        string contact_email
+        string phone
+        string kyc_status "pending|verified|rejected"
+        bigint balance_cents "Signed to allow negative reversals"
+        timestamp created_at
+        timestamp updated_at
+    }
+    EVENTS {
+        bigint_unsigned id PK
+        bigint_unsigned vendor_id FK
+        string title
+        text description
+        timestamp start_time
+        timestamp end_time
+        string timezone
+        string status "draft|published|completed|cancelled"
+        timestamp deleted_at "SoftDelete Index"
+        timestamp created_at
+        timestamp updated_at
+    }
+    TICKET_TYPES {
+        bigint_unsigned id PK
+        bigint_unsigned event_id FK
+        string name "VIP|General"
+        bigint_unsigned price_cents
+        integer_unsigned total_capacity
+        integer_unsigned remaining_inventory
+        datetime available_from
+        datetime available_until
+        boolean is_active
+        timestamp deleted_at "SoftDelete"
+        timestamp created_at
+        timestamp updated_at
+    }
+    TICKET_RESERVATIONS {
+        bigint_unsigned id PK
+        bigint_unsigned ticket_type_id FK
+        bigint_unsigned user_id FK
+        integer_unsigned quantity
+        string status "locked|released|converted"
+        timestamp expires_at
+        timestamp created_at
+    }
+    WAITLISTS {
+        bigint_unsigned id PK
+        bigint_unsigned ticket_type_id FK
+        bigint_unsigned user_id FK
+        integer_unsigned priority_index
+        string status "waiting|notified|converted"
+        timestamp created_at
+    }
+    ORDERS {
+        bigint_unsigned id PK
+        bigint_unsigned user_id FK
+        bigint_unsigned event_id FK
+        bigint_unsigned total_amount_cents
+        string status "pending|paid|failed|refunded"
+        string idempotency_key UK
+        timestamp created_at
+        timestamp updated_at
+    }
+    ORDER_ITEMS {
+        bigint_unsigned id PK
+        bigint_unsigned order_id FK
+        bigint_unsigned ticket_type_id FK
+        integer_unsigned quantity
+        bigint_unsigned price_cents
+        timestamp created_at
+    }
+    PAYMENTS {
+        bigint_unsigned id PK
+        bigint_unsigned order_id FK
+        string idempotency_key UK
+        string gateway_transaction_id
+        string gateway "stripe|paypal"
+        bigint_unsigned amount_cents
+        string status "pending|success|failed"
+        timestamp created_at
+        timestamp updated_at
+    }
+    REFUNDS {
+        bigint_unsigned id PK
+        bigint_unsigned order_id FK
+        bigint_unsigned payment_id FK
+        bigint_unsigned amount_cents
+        string reason
+        string status "pending|approved|rejected"
+        timestamp created_at
+        timestamp updated_at
+    }
+    PAYOUT_BATCHES {
+        bigint_unsigned id PK
+        string execution_date
+        integer_unsigned total_vendors
+        bigint_unsigned total_amount_cents
+        string status "processing|completed|failed"
+        timestamp created_at
+        timestamp updated_at
+    }
+    PAYOUTS {
+        bigint_unsigned id PK
+        bigint_unsigned vendor_id FK
+        bigint_unsigned payout_batch_id FK
+        bigint_unsigned gross_amount_cents
+        bigint_unsigned commission_cents
+        bigint_unsigned amount_cents
+        string idempotency_key UK
+        string status "queued|completed|failed"
+        timestamp created_at
+        timestamp updated_at
+    }
+    NOTIFICATIONS {
+        bigint_unsigned id PK
+        bigint_unsigned user_id FK
+        string type
+        string channel "email|webhook"
+        text body
+        string status "pending|sent|failed"
+        timestamp created_at
+    }
+    WEBHOOKS {
+        bigint_unsigned id PK
+        bigint_unsigned user_id FK
+        string url
+        string secret
+        json events
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+    DISPUTES {
+        bigint_unsigned id PK
+        bigint_unsigned order_id FK
+        bigint_unsigned user_id FK
+        string reason
+        text description
+        string status "open|under_review|resolved|rejected"
+        text resolution
+        timestamp created_at
+        timestamp updated_at
+    }
+    FINANCIAL_EVENT_LOGS {
+        bigint_unsigned id PK
+        string eventable_type
+        bigint_unsigned eventable_id
+        string event
+        json payload
+        timestamp created_at
+    }
+
+    USERS ||--o| VENDORS : "extends_as"
+    USERS ||--o{ TICKET_RESERVATIONS : "creates"
+    USERS ||--o{ WAITLISTS : "joins"
+    USERS ||--o{ ORDERS : "places"
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    USERS ||--o{ WEBHOOKS : "registers"
+    USERS ||--o{ DISPUTES : "files"
+    VENDORS ||--o{ EVENTS : "owns"
+    VENDORS ||--o{ PAYOUTS : "receives"
+    EVENTS ||--o{ TICKET_TYPES : "contains"
+    EVENTS ||--o{ ORDERS : "collects"
+    TICKET_TYPES ||--o{ TICKET_RESERVATIONS : "leases"
+    TICKET_TYPES ||--o{ WAITLISTS : "tracks"
+    TICKET_TYPES ||--o{ ORDER_ITEMS : "populates"
+    ORDERS ||--o{ ORDER_ITEMS : "details"
+    ORDERS ||--o| PAYMENTS : "funds"
+    ORDERS ||--o| REFUNDS : "reverses"
+    ORDERS ||--o{ DISPUTES : "disputed_by"
+    PAYMENTS ||--o| REFUNDS : "reverses"
+    PAYOUT_BATCHES ||--o{ PAYOUTS : "contains"

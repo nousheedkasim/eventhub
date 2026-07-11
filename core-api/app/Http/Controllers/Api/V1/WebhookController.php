@@ -7,36 +7,41 @@ use App\Http\Requests\StoreWebhookRequest;
 use App\Http\Requests\UpdateWebhookRequest;
 use App\Models\Webhook;
 use App\Services\WebhookService;
+use App\Services\PaymentCallbackService;
 
 class WebhookController extends Controller
 {
     public function __construct(
-        private WebhookService $webhookService
+        private WebhookService $webhookService,
+        private PaymentCallbackService $paymentCallbackService
     ) {}
 
     public function index()
     {
-        return response()->json($this->webhookService->getAll());
+        return response()->json(['success' => true, 'data' => $this->webhookService->getAll(), 'message' => 'Retrieved successfully']);
     }
 
     public function store(StoreWebhookRequest $request)
     {
-        return response()->json(
-            $this->webhookService->create($request->validated()),
-            201
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->webhookService->create($request->validated()),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
     public function show(Webhook $webhook)
     {
-        return response()->json($webhook);
+        return response()->json(['success' => true, 'data' => $webhook, 'message' => 'Retrieved successfully']);
     }
 
     public function update(UpdateWebhookRequest $request, Webhook $webhook)
     {
-        return response()->json(
-            $this->webhookService->update($webhook->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->webhookService->update($webhook->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     public function destroy(Webhook $webhook)
@@ -44,13 +49,69 @@ class WebhookController extends Controller
         $this->webhookService->delete($webhook->id);
 
         return response()->json([
-            'message' => 'Webhook deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 
-    /**
-     * Handle payment status callbacks from the payment microservice
-     */
+    public function registerVendorWebhook(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'url' => 'required|url',
+            'events' => 'required|array',
+            'events.*' => 'required|string|in:new_order,event_sold_out,payout_sent',
+        ]);
+
+        $user = $request->user();
+
+        if ($user->type !== 'vendor') {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'message' => 'Only vendors can register webhooks',
+            ], 403);
+        }
+
+        $vendor = $user->vendor;
+
+        $webhook = Webhook::create([
+            'vendor_id' => $vendor->id,
+            'url' => $request->input('url'),
+            'events' => $request->input('events'),
+            'secret' => \Illuminate\Support\Str::random(32),
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $webhook,
+            'message' => 'Webhook registered successfully',
+        ], 201);
+    }
+
+    public function getVendorWebhooks(\Illuminate\Http\Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->type !== 'vendor') {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'message' => 'Only vendors can view their webhooks',
+            ], 403);
+        }
+
+        $vendor = $user->vendor;
+        $webhooks = Webhook::where('vendor_id', $vendor->id)->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $webhooks,
+            'message' => 'Webhooks retrieved successfully',
+        ]);
+    }
+
     public function handlePaymentCallback(\Illuminate\Http\Request $request)
     {
         $request->validate([
@@ -60,74 +121,14 @@ class WebhookController extends Controller
             'amount' => 'required|numeric',
         ]);
 
-        $orderId = $request->input('order_id');
-        $paymentReference = $request->input('payment_reference');
-        $status = $request->input('status');
-
-        $payment = \App\Models\Payment::where('order_id', $orderId)
-            ->where('gateway_reference', $paymentReference)
-            ->firstOrFail();
-
-        \Illuminate\Support\Facades\DB::transaction(function () use ($payment, $status) {
-            $oldPaymentStatus = $payment->status;
-            $newPaymentStatus = $status; // 'paid' or 'failed'
-
-            // 1. Update payment status
-            $payment->status = $newPaymentStatus;
-            if ($newPaymentStatus === 'paid') {
-                $payment->paid_at = now();
-            }
-            $payment->save();
-
-            \App\Models\PaymentEvent::create([
-                'payment_id' => $payment->id,
-                'from_status' => $oldPaymentStatus,
-                'to_status' => $newPaymentStatus,
-                'payload' => [
-                    'message' => 'Payment status updated via callback webhook.',
-                    'gateway_reference' => $payment->gateway_reference,
-                ],
-            ]);
-
-            // 2. Update Order status
-            $order = $payment->order;
-            $oldOrderStatus = $order->status;
-            // The enum for paid orders in orders table is 'paid' (or we can support 'paid')
-            $newOrderStatus = ($newPaymentStatus === 'paid') ? 'paid' : 'cancelled';
-
-            $order->status = $newOrderStatus;
-            $order->hold_expires_at = null; // Clear hold expiration
-            $order->save();
-
-            \App\Models\OrderEvent::create([
-                'order_id' => $order->id,
-                'from_status' => $oldOrderStatus,
-                'to_status' => $newOrderStatus,
-                'payload' => [
-                    'message' => "Order updated to {$newOrderStatus} due to payment callback.",
-                    'payment_id' => $payment->id,
-                ],
-            ]);
-
-            // 3. Release tickets back to inventory on failure
-            if ($newPaymentStatus === 'failed') {
-                foreach ($order->items as $item) {
-                    $ticketType = $item->ticketType;
-                    if ($ticketType) {
-                        $ticketType->sold_count = max(0, $ticketType->sold_count - $item->qty);
-                        $ticketType->save();
-                    }
-                }
-            }
-
-            // 4. Stub notification call for Day 4
-            \Illuminate\Support\Facades\Log::info("STUB: Triggering confirmation notification for Order #{$order->id} (Status: {$newOrderStatus}).");
-        });
+        $result = $this->paymentCallbackService->handleCallback($request->only([
+            'order_id', 'payment_reference', 'status',
+        ]));
 
         return response()->json([
             'success' => true,
+            'data' => $result,
             'message' => 'Webhook processed successfully.',
         ]);
     }
 }
-

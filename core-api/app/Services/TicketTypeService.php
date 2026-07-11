@@ -15,6 +15,11 @@ class TicketTypeService
         return $this->repository->all();
     }
 
+    public function getByEvent($eventId)
+    {
+        return $this->repository->getByEvent($eventId);
+    }
+
     public function create(array $data)
     {
         return $this->repository->create($data);

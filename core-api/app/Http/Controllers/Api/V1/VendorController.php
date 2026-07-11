@@ -25,20 +25,21 @@ class VendorController extends Controller
 
     public function index()
     {
-        return response()->json($this->vendorService->getAll());
+        return response()->json(['success' => true, 'data' => $this->vendorService->getAll(), 'message' => 'Retrieved successfully']);
     }
 
     public function store(StoreVendorRequest $request)
     {
-        return response()->json(
-            $this->vendorService->create($request->validated()),
-            201
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->vendorService->create($request->validated()),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
     public function show(Vendor $vendor)
     {
-        return response()->json($vendor);
+        return response()->json(['success' => true, 'data' => $vendor, 'message' => 'Retrieved successfully']);
     }
 
     // Admin only
@@ -46,9 +47,11 @@ class VendorController extends Controller
     {
         $this->requireAdmin($request);
 
-        return response()->json(
-            $this->vendorService->update($vendor->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->vendorService->update($vendor->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     // Admin only
@@ -59,7 +62,9 @@ class VendorController extends Controller
         $this->vendorService->delete($vendor->id);
 
         return response()->json([
-            'message' => 'Vendor deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 
@@ -79,12 +84,34 @@ class VendorController extends Controller
             $payload['kyc_notes'] = $validated['kyc_notes'];
         }
 
-        return response()->json(
-            $this->vendorService->update($validated['vendor_id'], $payload)
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->vendorService->update($validated['vendor_id'], $payload),
+            'message' => 'Vendor approved successfully',
+        ]);
+    }
+
+    // Admin only operation: reject vendor
+    public function reject(ApproveVendorRequest $request)
+    {
+        $this->requireAdmin($request);
+
+        $validated = $request->validated();
+
+        $payload = [
+            'is_active' => false,
+            'kyc_status' => 'rejected',
+        ];
+
+        if (array_key_exists('kyc_notes', $validated)) {
+            $payload['kyc_notes'] = $validated['kyc_notes'];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->vendorService->update($validated['vendor_id'], $payload),
+            'message' => 'Vendor rejected successfully',
+        ]);
     }
 
 }
-
-
-

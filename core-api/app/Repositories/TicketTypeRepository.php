@@ -12,6 +12,11 @@ class TicketTypeRepository implements TicketTypeRepositoryInterface
         return TicketType::query()->paginate(15);
     }
 
+    public function getByEvent($eventId)
+    {
+        return TicketType::where('event_id', $eventId)->get();
+    }
+
     public function find($id)
     {
         return TicketType::findOrFail($id);

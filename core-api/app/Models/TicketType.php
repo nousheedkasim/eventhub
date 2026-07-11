@@ -21,7 +21,7 @@ class TicketType extends Model
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
+        'price' => 'integer',
         'inventory' => 'integer',
         'sold_count' => 'integer',
         'available_from' => 'datetime',
@@ -32,6 +32,11 @@ class TicketType extends Model
     public function event()
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function waitlists()
+    {
+        return $this->hasMany(Waitlist::class);
     }
 }
 

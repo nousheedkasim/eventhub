@@ -16,27 +16,30 @@ class RefundController extends Controller
 
     public function index()
     {
-        return response()->json($this->refundService->getAll());
+        return response()->json(['success' => true, 'data' => $this->refundService->getAll(), 'message' => 'Retrieved successfully']);
     }
 
     public function store(StoreRefundRequest $request)
     {
-        return response()->json(
-            $this->refundService->create($request->validated()),
-            201
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->refundService->create($request->validated()),
+            'message' => 'Created successfully',
+        ], 201);
     }
 
     public function show(Refund $refund)
     {
-        return response()->json($refund);
+        return response()->json(['success' => true, 'data' => $refund, 'message' => 'Retrieved successfully']);
     }
 
     public function update(UpdateRefundRequest $request, Refund $refund)
     {
-        return response()->json(
-            $this->refundService->update($refund->id, $request->validated())
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $this->refundService->update($refund->id, $request->validated()),
+            'message' => 'Updated successfully',
+        ]);
     }
 
     public function destroy(Refund $refund)
@@ -44,7 +47,9 @@ class RefundController extends Controller
         $this->refundService->delete($refund->id);
 
         return response()->json([
-            'message' => 'Refund deleted successfully',
+            'success' => true,
+            'data' => null,
+            'message' => 'Deleted successfully',
         ]);
     }
 }

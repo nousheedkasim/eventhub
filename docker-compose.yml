@@ -23,7 +23,7 @@ services:
     container_name: eventhub_core_api
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8000:80"
     volumes:
       - ./core-api:/var/www/html
     depends_on:
@@ -56,9 +56,48 @@ services:
       APP_KEY: base64:I4lIuNQ/ohBnMUjHt0SmF5tBpjBKag7XWDEjPzvD62Q=
       QUEUE_CONNECTION: database
       PAYMENT_SERVICE_SECRET: secure_shared_secret
-      CORE_API_URL: http://core-api:8000
+      CORE_API_URL: http://core-api:80
       STRIPE_SUCCESS_RATE: 0.9
       PAYPAL_SUCCESS_RATE: 0.8
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: eventhub_notification_service
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./notification-service:/app
+    depends_on:
+      - redis
+    environment:
+      PORT: 3002
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CORE_API_URL: http://core-api:80
+      CORE_API_SECRET: secure_shared_secret
+      WEBHOOK_TIMEOUT_MS: 5000
+      WEBHOOK_MAX_RETRIES: 3
+      WEBHOOK_RETRY_DELAY_MS: 1000
+      LOG_LEVEL: info
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eventhub_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - core-api
 
 volumes:
   mysql_data:

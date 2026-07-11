@@ -14,6 +14,12 @@ class EventRepository implements EventRepositoryInterface
     }
 
 
+    public function getByVendor($vendorId)
+    {
+        return Event::where('vendor_id', $vendorId)->get();
+    }
+
+
     public function find($id)
     {
         return Event::findOrFail($id);

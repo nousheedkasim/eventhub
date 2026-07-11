@@ -46,8 +46,61 @@ This Technical Decision Log (TDL) acts as an Architecture Decision Record (ADR) 
 
 ---
 
+## TDL-005: Notification Queue Technology (Bull on Redis)
+* **Status:** Approved
+* **Context:** The notification microservice must consume jobs asynchronously with reliable delivery, retry logic, and failure tracking. The assessment requires a queue-driven service with exponential backoff retries.
+* **Decision:** We selected **Bull** (backed by Redis) as the queue technology for the Node.js notification worker.
+* **Alternatives Considered:**
+  * **RabbitMQ (via AMQP):** More feature-rich for complex routing, but adds significant operational overhead and requires a separate broker service. Overkill for a notification fan-out pattern.
+  * **Kafka:** Designed for high-throughput event streaming, not suited for simple task queues with retry semantics.
+  * **Agenda/MongoDB-based queues:** Adds MongoDB as a dependency. Redis is already present for caching and locking in the core API.
+* **Consequences & Trade-offs:** Bull provides built-in support for exponential backoff, job prioritization, delayed jobs, and dead-letter tracking via failed job retention. The trade-off is that Bull requires Redis as a single point of failure — if Redis goes down, notification processing halts. We accept this because Redis is already a critical dependency for the ticketing locking mechanism.
+
+---
+
+## TDL-006: Frontend Framework (Next.js 14 App Router)
+* **Status:** Approved
+* **Context:** The frontend must demonstrate functional data flow between a web UI and the backend API across three user roles (vendor, attendee, admin). The assessment evaluates functionality, not pixel-perfect design.
+* **Decision:** We selected **Next.js 14 with the App Router** as the frontend framework.
+* **Alternatives Considered:**
+  * **React (Vite):** Simpler setup, but lacks built-in routing, SSR capabilities, and file-based organization that Next.js provides out of the box.
+  * **Nuxt.js (Vue):** Viable alternative, but the team has stronger React/TypeScript familiarity.
+  * **Remix:** Strong data loading patterns, but smaller ecosystem and less community adoption than Next.js.
+* **Consequences & Trade-offs:** Next.js introduces client/server component complexity and a steeper learning curve for developers unfamiliar with the App Router. However, it provides excellent developer experience with file-based routing, built-in API routes (unused here since we have a separate backend), and seamless TypeScript integration. We use Zustand for lightweight client-side state management rather than heavier solutions like Redux.
+
+---
+
+## TDL-007: Authentication Strategy (Laravel Sanctum)
+* **Status:** Approved
+* **Context:** The platform requires token-based authentication with role-based access control (admin, vendor, attendee). Auth must work across the core API and be consumable by the frontend. Inter-service authentication between core API and payment service also needs a mechanism.
+* **Decision:** We adopted a dual approach:
+  * **Laravel Sanctum** for API token authentication (user-facing endpoints).
+  * **Shared secret middleware** for inter-service communication (core API ↔ payment service).
+* **Alternatives Considered:**
+  * **JWT (tymon/jwt-auth):** Stateful token validation with refresh tokens. More complex than needed for a server-rendered SPA that communicates with a single API.
+  * **OAuth2/OIDC (Passport):** Full OAuth2 server implementation. Significant overhead for a 3-service architecture where inter-service auth can use a simpler shared secret.
+  * **API Key authentication:** Too simplistic — doesn't support user sessions or token revocation.
+* **Consequences & Trade-offs:** Sanctum tokens are database-backed, allowing revocation and audit trails. The shared secret approach for inter-service communication is pragmatic for this scale but would need to be replaced with mutual TLS or a service mesh in production. We accept this trade-off given the 5-day timeline.
+
+---
+
+## TDL-008: Testing Strategy (PHPUnit + RefreshDatabase)
+* **Status:** Approved
+* **Context:** The assessment requires unit tests for order processing, payout calculations, and ticket inventory management. Tests must cover business logic edge cases, not just CRUD assertions.
+* **Decision:** We adopted **PHPUnit** with Laravel's `RefreshDatabase` trait for test isolation. Tests use real Eloquent models (not mocks) to validate actual database interactions and business logic.
+* **Alternatives Considered:**
+  * **Pest PHP:** More expressive syntax, but adds a dependency and team members may not be familiar with it.
+  * **Mockery-heavy tests:** Isolating services via mocks would test interfaces rather than actual behavior. For financial logic, we need to verify the full transaction flow including database state.
+  * **Dusk (browser testing):** Too slow and heavyweight for unit-level business logic tests.
+* **Consequences & Trade-offs:** Using `RefreshDatabase` means each test runs within a transaction that is rolled back, ensuring test isolation. The trade-off is slightly slower test execution compared to in-memory database testing, but it guarantees that migrations are tested alongside business logic. We prioritized test quality (meaningful edge case coverage) over coverage percentage.
+
+---
+
 ## 🛠️ "With More Time" Section (Pragmatic Tech Debt Roadmap)
 Given the strict 5-day timeline, the following pragmatic compromises were accepted:
 1. **Monorepo Directory Isolation:** The services are co-located within a single Git repository for deployment speed, though they are written to allow an instant split into independent infrastructure codebases later.
 2. **Simplified Authentication Mesh:** Inter-service verification utilizes hardcoded shared cryptographic secrets inside environment configurations rather than a dedicated OAuth2/OIDC server setup.
+3. **Frontend Component Library:** Only minimal UI components were created. A production system would adopt shadcn/ui or Ant Design for consistent, accessible components across all views.
+4. **Observability Stack:** Currently logs to console/file only. A production deployment would integrate structured logging (ELK/Datadog), distributed tracing (OpenTelemetry), and alerting for failed financial operations.
+5. **Database Migrations for Soft Deletes:** Events table soft-deletion was added post-initial design. A full audit of all soft-delete boundaries should be conducted before production to ensure consistent data retention policies.
 
