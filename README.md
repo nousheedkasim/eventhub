@@ -17,3 +17,7 @@ docker compose up -d redis
 
 Then scaffold/run each service as described in `CLAUDE.md`.
 
+## Walkthrough video link
+
+https://drive.google.com/file/d/1F87qYHkBYFLoxlL08QAPWSJu9j_r76-F/view?usp=drive_link
+
