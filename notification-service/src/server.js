@@ -12,6 +12,15 @@ const PORT = process.env.PORT || 3002;
 // Middleware
 app.use(express.json());
 
+// CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, X-Internal-Secret');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -96,6 +105,78 @@ app.get('/queues/webhook/waiting', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get waiting webhook jobs' });
+  }
+});
+
+// View completed jobs endpoint
+app.get('/queues/email/completed', async (req, res) => {
+  try {
+    const jobs = await emailQueue.getCompleted(0, 10);
+    const jobDetails = jobs.map(job => ({
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      returnvalue: job.returnvalue,
+      timestamp: job.timestamp,
+      finishedOn: job.finishedOn,
+    }));
+    res.json({ count: jobDetails.length, jobs: jobDetails });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get completed email jobs' });
+  }
+});
+
+app.get('/queues/webhook/completed', async (req, res) => {
+  try {
+    const jobs = await webhookQueue.getCompleted(0, 10);
+    const jobDetails = jobs.map(job => ({
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      returnvalue: job.returnvalue,
+      timestamp: job.timestamp,
+      finishedOn: job.finishedOn,
+    }));
+    res.json({ count: jobDetails.length, jobs: jobDetails });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get completed webhook jobs' });
+  }
+});
+
+// View failed jobs endpoint
+app.get('/queues/email/failed', async (req, res) => {
+  try {
+    const jobs = await emailQueue.getFailed(0, 10);
+    const jobDetails = jobs.map(job => ({
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      failedReason: job.failedReason,
+      attemptsMade: job.attemptsMade,
+      timestamp: job.timestamp,
+      finishedOn: job.finishedOn,
+    }));
+    res.json({ count: jobDetails.length, jobs: jobDetails });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get failed email jobs' });
+  }
+});
+
+app.get('/queues/webhook/failed', async (req, res) => {
+  try {
+    const jobs = await webhookQueue.getFailed(0, 10);
+    const jobDetails = jobs.map(job => ({
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      failedReason: job.failedReason,
+      attemptsMade: job.attemptsMade,
+      timestamp: job.timestamp,
+      finishedOn: job.finishedOn,
+    }));
+    res.json({ count: jobDetails.length, jobs: jobDetails });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get failed webhook jobs' });
   }
 });
 

@@ -10,13 +10,18 @@ class EventRepository implements EventRepositoryInterface
 
     public function all()
     {
-        return Event::all();
+        return Event::whereHas('vendor', function ($query) {
+            $query->where('is_active', true)->where('kyc_status', 'verified');
+        })->get();
     }
 
 
     public function getByVendor($vendorId)
     {
-        return Event::where('vendor_id', $vendorId)->get();
+        return Event::where('vendor_id', $vendorId)
+            ->whereHas('vendor', function ($query) {
+                $query->where('is_active', true)->where('kyc_status', 'verified');
+            })->get();
     }
 
 

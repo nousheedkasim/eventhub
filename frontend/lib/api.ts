@@ -82,4 +82,22 @@ export const disputesAPI = {
     api.post(`/api/v1/disputes/${id}/resolve`, data),
 };
 
+export const notificationsAPI = {
+  getAll: (params?: any) => api.get('/api/v1/notifications', { params }),
+  getById: (id: number) => api.get(`/api/v1/notifications/${id}`),
+};
+
+const NOTIFICATION_SERVICE_URL = process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL || 'http://localhost:3002';
+
+export const queueAPI = {
+  getStatus: () => axios.get(`${NOTIFICATION_SERVICE_URL}/queues`),
+  getEmailWaiting: () => axios.get(`${NOTIFICATION_SERVICE_URL}/queues/email/waiting`),
+  getWebhookWaiting: () => axios.get(`${NOTIFICATION_SERVICE_URL}/queues/webhook/waiting`),
+  getEmailCompleted: () => axios.get(`${NOTIFICATION_SERVICE_URL}/queues/email/completed`),
+  getWebhookCompleted: () => axios.get(`${NOTIFICATION_SERVICE_URL}/queues/webhook/completed`),
+  getEmailFailed: () => axios.get(`${NOTIFICATION_SERVICE_URL}/queues/email/failed`),
+  getWebhookFailed: () => axios.get(`${NOTIFICATION_SERVICE_URL}/queues/webhook/failed`),
+  getDeadLetters: () => axios.get(`${NOTIFICATION_SERVICE_URL}/dead-letter`),
+};
+
 export default api;

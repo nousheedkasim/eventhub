@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVendorRequest;
 use App\Http\Requests\UpdateVendorRequest;
-use App\Http\Requests\ApproveVendorRequest;
 use App\Models\Vendor;
 use App\Services\VendorService;
 use Illuminate\Http\Request;
@@ -69,47 +68,43 @@ class VendorController extends Controller
     }
 
     // Admin only operation: approve vendor
-    public function approve(ApproveVendorRequest $request)
+    public function approve(Request $request, Vendor $vendor)
     {
         $this->requireAdmin($request);
-
-        $validated = $request->validated();
 
         $payload = [
             'is_active' => true,
             'kyc_status' => 'verified',
         ];
 
-        if (array_key_exists('kyc_notes', $validated)) {
-            $payload['kyc_notes'] = $validated['kyc_notes'];
+        if ($request->has('kyc_notes')) {
+            $payload['kyc_notes'] = $request->input('kyc_notes');
         }
 
         return response()->json([
             'success' => true,
-            'data' => $this->vendorService->update($validated['vendor_id'], $payload),
+            'data' => $this->vendorService->update($vendor->id, $payload),
             'message' => 'Vendor approved successfully',
         ]);
     }
 
     // Admin only operation: reject vendor
-    public function reject(ApproveVendorRequest $request)
+    public function reject(Request $request, Vendor $vendor)
     {
         $this->requireAdmin($request);
-
-        $validated = $request->validated();
 
         $payload = [
             'is_active' => false,
             'kyc_status' => 'rejected',
         ];
 
-        if (array_key_exists('kyc_notes', $validated)) {
-            $payload['kyc_notes'] = $validated['kyc_notes'];
+        if ($request->has('kyc_notes')) {
+            $payload['kyc_notes'] = $request->input('kyc_notes');
         }
 
         return response()->json([
             'success' => true,
-            'data' => $this->vendorService->update($validated['vendor_id'], $payload),
+            'data' => $this->vendorService->update($vendor->id, $payload),
             'message' => 'Vendor rejected successfully',
         ]);
     }

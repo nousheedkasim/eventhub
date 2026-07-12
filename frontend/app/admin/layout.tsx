@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Shield, Users, Calendar, BarChart3, FileText, AlertTriangle, LogOut } from "lucide-react"
+import { Shield, Users, Calendar, BarChart3, FileText, AlertTriangle, Bell, LogOut } from "lucide-react"
 import { useAuthStore } from "@/lib/store"
 import { authAPI } from "@/lib/api"
 
@@ -67,6 +67,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/events', label: 'Events', icon: Calendar },
     { href: '/admin/reports', label: 'Reports', icon: FileText },
     { href: '/admin/disputes', label: 'Disputes', icon: AlertTriangle },
+    { href: '/admin/notifications', label: 'Notifications', icon: Bell },
   ]
 
   const handleLogout = () => {

@@ -107,8 +107,7 @@ export default function CreateEventPage() {
         event_date: eventDate,
       })
 
-      const createdEvent = eventResponse.data
-      const eventId = createdEvent.id
+      const eventId = eventResponse.data.data.id
 
       // 2. Create Ticket Tiers Sequentially
       for (const tier of ticketTiers) {
