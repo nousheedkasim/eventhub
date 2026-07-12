@@ -1,164 +1,197 @@
 erDiagram
     USERS {
-        bigint_unsigned id PK
+        bigint id PK
         string name
         string email UK
+        string type "admin|vendor|attendee, default: user"
         string password
-        string type "admin|vendor|attendee"
+        timestamp email_verified_at
         timestamp created_at
         timestamp updated_at
     }
     VENDORS {
-        bigint_unsigned id PK
-        bigint_unsigned user_id FK
+        bigint id PK
         string company_name
-        string contact_name
-        string contact_email
+        string contact_person
+        string email UK
         string phone
-        string kyc_status "pending|verified|rejected"
-        bigint balance_cents "Signed to allow negative reversals"
+        text address
+        string website
+        enum kyc_status "pending|verified|rejected"
+        text kyc_notes
+        string bank_name
+        string account_holder_name
+        string account_number
+        string iban
+        string swift_code
+        boolean is_active
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at "SoftDelete"
     }
     EVENTS {
-        bigint_unsigned id PK
-        bigint_unsigned vendor_id FK
+        bigint id PK
+        bigint vendor_id FK
         string title
         text description
-        timestamp start_time
-        timestamp end_time
-        string timezone
-        string status "draft|published|completed|cancelled"
-        timestamp deleted_at "SoftDelete Index"
+        string location
+        datetime event_date
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at "SoftDelete"
     }
     TICKET_TYPES {
-        bigint_unsigned id PK
-        bigint_unsigned event_id FK
-        string name "VIP|General"
-        bigint_unsigned price_cents
-        integer_unsigned total_capacity
-        integer_unsigned remaining_inventory
+        bigint id PK
+        bigint event_id FK
+        string type "VIP|General|etc"
+        bigint price "BIGINT UNSIGNED (cents)"
+        int inventory
+        int sold_count
         datetime available_from
         datetime available_until
         boolean is_active
+        timestamp created_at
+        timestamp updated_at
         timestamp deleted_at "SoftDelete"
+    }
+    TICKET_RESERVATIONS {
+        bigint id PK
+        bigint ticket_type_id FK
+        bigint user_id FK
+        int quantity
+        enum status "locked|released|converted"
+        timestamp expires_at
         timestamp created_at
         timestamp updated_at
     }
-    TICKET_RESERVATIONS {
-        bigint_unsigned id PK
-        bigint_unsigned ticket_type_id FK
-        bigint_unsigned user_id FK
-        integer_unsigned quantity
-        string status "locked|released|converted"
-        timestamp expires_at
-        timestamp created_at
-    }
     WAITLISTS {
-        bigint_unsigned id PK
-        bigint_unsigned ticket_type_id FK
-        bigint_unsigned user_id FK
-        integer_unsigned priority_index
-        string status "waiting|notified|converted"
+        bigint id PK
+        bigint ticket_type_id FK
+        bigint user_id FK
+        int priority_index
+        boolean notified
         timestamp created_at
+        timestamp updated_at
     }
     ORDERS {
-        bigint_unsigned id PK
-        bigint_unsigned user_id FK
-        bigint_unsigned event_id FK
-        bigint_unsigned total_amount_cents
-        string status "pending|paid|failed|refunded"
-        string idempotency_key UK
+        bigint id PK
+        bigint attendee_id FK
+        enum status "pending|held|paid|cancelled|expired|refunded"
+        bigint total_amount "BIGINT UNSIGNED (cents)"
+        datetime hold_expires_at
         timestamp created_at
         timestamp updated_at
     }
     ORDER_ITEMS {
-        bigint_unsigned id PK
-        bigint_unsigned order_id FK
-        bigint_unsigned ticket_type_id FK
-        integer_unsigned quantity
-        bigint_unsigned price_cents
+        bigint id PK
+        bigint order_id FK
+        bigint ticket_type_id FK
+        int qty
+        bigint price_at_purchase "BIGINT UNSIGNED (cents)"
         timestamp created_at
+        timestamp updated_at
     }
     PAYMENTS {
-        bigint_unsigned id PK
-        bigint_unsigned order_id FK
-        string idempotency_key UK
-        string gateway_transaction_id
+        bigint id PK
+        bigint order_id FK
         string gateway "stripe|paypal"
-        bigint_unsigned amount_cents
-        string status "pending|success|failed"
+        enum status "pending|authorized|paid|failed|refunded"
+        string idempotency_key UK
+        string gateway_reference
+        bigint amount "BIGINT UNSIGNED (cents)"
+        char currency "3 chars"
+        datetime paid_at
         timestamp created_at
         timestamp updated_at
     }
     REFUNDS {
-        bigint_unsigned id PK
-        bigint_unsigned order_id FK
-        bigint_unsigned payment_id FK
-        bigint_unsigned amount_cents
-        string reason
-        string status "pending|approved|rejected"
+        bigint id PK
+        bigint payment_id FK
+        bigint amount "BIGINT UNSIGNED (cents)"
+        string policy_applied
+        enum status "pending|approved|completed|failed"
+        text reason
+        datetime refunded_at
         timestamp created_at
         timestamp updated_at
     }
     PAYOUT_BATCHES {
-        bigint_unsigned id PK
-        string execution_date
-        integer_unsigned total_vendors
-        bigint_unsigned total_amount_cents
-        string status "processing|completed|failed"
+        bigint id PK
+        string batch_reference UK
+        enum status "pending|running|completed|failed"
+        int total_payouts
+        int processed_count
+        string resume_token
+        datetime started_at
+        datetime completed_at
         timestamp created_at
         timestamp updated_at
     }
     PAYOUTS {
-        bigint_unsigned id PK
-        bigint_unsigned vendor_id FK
-        bigint_unsigned payout_batch_id FK
-        bigint_unsigned gross_amount_cents
-        bigint_unsigned commission_cents
-        bigint_unsigned amount_cents
-        string idempotency_key UK
-        string status "queued|completed|failed"
+        bigint id PK
+        bigint vendor_id FK
+        bigint payout_batch_id FK
+        bigint gross_amount "BIGINT UNSIGNED (cents)"
+        bigint commission "BIGINT UNSIGNED (cents)"
+        bigint amount "BIGINT UNSIGNED (cents)"
+        enum status "pending|processing|paid|failed"
+        string transfer_reference
+        datetime paid_at
         timestamp created_at
         timestamp updated_at
     }
     NOTIFICATIONS {
-        bigint_unsigned id PK
-        bigint_unsigned user_id FK
+        bigint id PK
+        bigint recipient_user_id FK
         string type
-        string channel "email|webhook"
-        text body
-        string status "pending|sent|failed"
+        string channel "email|webhook|sms"
+        enum status "pending|sent|failed"
+        int retry_count
+        text payload
+        datetime sent_at
         timestamp created_at
+        timestamp updated_at
     }
     WEBHOOKS {
-        bigint_unsigned id PK
-        bigint_unsigned user_id FK
+        bigint id PK
+        bigint vendor_id FK
         string url
         string secret
-        json events
-        boolean is_active
+        boolean active
         timestamp created_at
         timestamp updated_at
     }
     DISPUTES {
-        bigint_unsigned id PK
-        bigint_unsigned order_id FK
-        bigint_unsigned user_id FK
-        string reason
-        text description
-        string status "open|under_review|resolved|rejected"
+        bigint id PK
+        bigint order_id FK
+        enum status "open|investigating|resolved|rejected"
+        text reason
         text resolution
+        datetime resolved_at
         timestamp created_at
         timestamp updated_at
     }
-    FINANCIAL_EVENT_LOGS {
-        bigint_unsigned id PK
-        string eventable_type
-        bigint_unsigned eventable_id
-        string event
+    ORDER_EVENTS {
+        bigint id PK
+        bigint order_id FK
+        string from_status
+        string to_status
+        json payload
+        timestamp created_at
+    }
+    PAYMENT_EVENTS {
+        bigint id PK
+        bigint payment_id FK
+        string from_status
+        string to_status
+        json payload
+        timestamp created_at
+    }
+    REFUND_EVENTS {
+        bigint id PK
+        bigint refund_id FK
+        string from_status
+        string to_status
         json payload
         timestamp created_at
     }
@@ -168,18 +201,20 @@ erDiagram
     USERS ||--o{ WAITLISTS : "joins"
     USERS ||--o{ ORDERS : "places"
     USERS ||--o{ NOTIFICATIONS : "receives"
-    USERS ||--o{ WEBHOOKS : "registers"
-    USERS ||--o{ DISPUTES : "files"
     VENDORS ||--o{ EVENTS : "owns"
     VENDORS ||--o{ PAYOUTS : "receives"
+    VENDORS ||--o{ WEBHOOKS : "registers"
     EVENTS ||--o{ TICKET_TYPES : "contains"
     EVENTS ||--o{ ORDERS : "collects"
     TICKET_TYPES ||--o{ TICKET_RESERVATIONS : "leases"
     TICKET_TYPES ||--o{ WAITLISTS : "tracks"
     TICKET_TYPES ||--o{ ORDER_ITEMS : "populates"
     ORDERS ||--o{ ORDER_ITEMS : "details"
-    ORDERS ||--o| PAYMENTS : "funds"
-    ORDERS ||--o| REFUNDS : "reverses"
+    ORDERS ||--o{ PAYMENTS : "funds"
+    ORDERS ||--o{ REFUNDS : "reverses"
     ORDERS ||--o{ DISPUTES : "disputed_by"
-    PAYMENTS ||--o| REFUNDS : "reverses"
+    ORDERS ||--o{ ORDER_EVENTS : "tracked_by"
+    PAYMENTS ||--o{ REFUNDS : "reverses"
+    PAYMENTS ||--o{ PAYMENT_EVENTS : "tracked_by"
+    REFUNDS ||--o{ REFUND_EVENTS : "tracked_by"
     PAYOUT_BATCHES ||--o{ PAYOUTS : "contains"
