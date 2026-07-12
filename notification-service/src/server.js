@@ -30,6 +30,132 @@ app.get('/dead-letter', (req, res) => {
   });
 });
 
+// Queue status endpoint
+app.get('/queues', async (req, res) => {
+  try {
+    const emailWaiting = await emailQueue.getWaitingCount();
+    const emailActive = await emailQueue.getActiveCount();
+    const emailCompleted = await emailQueue.getCompletedCount();
+    const emailFailed = await emailQueue.getFailedCount();
+
+    const webhookWaiting = await webhookQueue.getWaitingCount();
+    const webhookActive = await webhookQueue.getActiveCount();
+    const webhookCompleted = await webhookQueue.getCompletedCount();
+    const webhookFailed = await webhookQueue.getFailedCount();
+
+    res.json({
+      email: {
+        waiting: emailWaiting,
+        active: emailActive,
+        completed: emailCompleted,
+        failed: emailFailed,
+      },
+      webhook: {
+        waiting: webhookWaiting,
+        active: webhookActive,
+        completed: webhookCompleted,
+        failed: webhookFailed,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get queue status' });
+  }
+});
+
+// View waiting jobs endpoint
+app.get('/queues/email/waiting', async (req, res) => {
+  try {
+    const jobs = await emailQueue.getWaiting(0, 10);
+    const jobDetails = jobs.map(job => ({
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      timestamp: job.timestamp,
+    }));
+    res.json({
+      count: jobDetails.length,
+      jobs: jobDetails,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get waiting email jobs' });
+  }
+});
+
+app.get('/queues/webhook/waiting', async (req, res) => {
+  try {
+    const jobs = await webhookQueue.getWaiting(0, 10);
+    const jobDetails = jobs.map(job => ({
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      timestamp: job.timestamp,
+    }));
+    res.json({
+      count: jobDetails.length,
+      jobs: jobDetails,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get waiting webhook jobs' });
+  }
+});
+
+// Shared secret auth middleware for internal API routes
+function authenticateInternal(req, res, next) {
+  const secret = process.env.CORE_API_SECRET || 'secure_shared_secret';
+  const authHeader = req.headers['x-internal-secret'];
+
+  if (!authHeader || authHeader !== secret) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
+
+// POST /api/notifications/email - Enqueue an email notification
+app.post('/api/notifications/email', authenticateInternal, async (req, res) => {
+  try {
+    const { type, data } = req.body;
+
+    if (!type || !data) {
+      return res.status(400).json({ error: 'Missing required fields: type, data' });
+    }
+
+    const job = await emailQueue.add({ type, data }, {
+      attempts: parseInt(process.env.NOTIFICATION_MAX_RETRIES || '5', 10),
+      backoff: { type: 'exponential', delay: 1000 },
+    });
+
+    logger.info(`[API] Email notification enqueued: type=${type}, jobId=${job.id}`);
+
+    res.status(201).json({ success: true, job_id: job.id });
+  } catch (error) {
+    logger.error('[API] Failed to enqueue email notification:', error);
+    res.status(500).json({ error: 'Failed to enqueue email notification' });
+  }
+});
+
+// POST /api/notifications/webhook - Enqueue a webhook delivery
+app.post('/api/notifications/webhook', authenticateInternal, async (req, res) => {
+  try {
+    const { type, data } = req.body;
+
+    if (!type || !data) {
+      return res.status(400).json({ error: 'Missing required fields: type, data' });
+    }
+
+    const job = await webhookQueue.add({ type, data }, {
+      attempts: parseInt(process.env.NOTIFICATION_MAX_RETRIES || '5', 10),
+      backoff: { type: 'exponential', delay: 1000 },
+    });
+
+    logger.info(`[API] Webhook notification enqueued: type=${type}, jobId=${job.id}`);
+
+    res.status(201).json({ success: true, job_id: job.id });
+  } catch (error) {
+    logger.error('[API] Failed to enqueue webhook notification:', error);
+    res.status(500).json({ error: 'Failed to enqueue webhook notification' });
+  }
+});
+
 // Initialize queues and workers
 let emailQueue, webhookQueue;
 

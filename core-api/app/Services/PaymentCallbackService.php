@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\Payment;
 use App\Models\PaymentEvent;
 use App\Models\OrderEvent;
+use App\Models\Webhook;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class PaymentCallbackService
@@ -21,7 +23,9 @@ class PaymentCallbackService
             ->where('gateway_reference', $paymentReference)
             ->firstOrFail();
 
-        DB::transaction(function () use ($payment, $status) {
+        $newPaymentStatus = null;
+
+        DB::transaction(function () use ($payment, $status, &$newPaymentStatus) {
             $oldPaymentStatus = $payment->status;
             $newPaymentStatus = $status;
 
@@ -68,10 +72,86 @@ class PaymentCallbackService
                     }
                 }
             }
-
-            Log::info("STUB: Triggering confirmation notification for Order #{$order->id} (Status: {$newOrderStatus}).");
         });
 
+        if ($newPaymentStatus === 'paid') {
+            $this->dispatchNotifications($orderId);
+        }
+
         return ['order_id' => $orderId, 'status' => $status];
+    }
+
+    private function dispatchNotifications(int $orderId): void
+    {
+        $notificationUrl = config('services.notification.url', 'http://localhost:3002');
+        $notificationSecret = config('services.notification.secret', 'secure_shared_secret');
+
+        $order = \App\Models\Order::with([
+            'attendee',
+            'items.ticketType.event.vendor',
+        ])->findOrFail($orderId);
+
+        $attendeeEmail = $order->attendee->email ?? null;
+
+        if ($attendeeEmail) {
+            try {
+                Http::withHeaders([
+                    'X-Internal-Secret' => $notificationSecret,
+                ])->post($notificationUrl . '/api/notifications/email', [
+                    'type' => 'order_confirmation',
+                    'data' => [
+                        'attendee_email' => $attendeeEmail,
+                        'order_id' => $order->id,
+                    ],
+                ]);
+                Log::info("Order confirmation email dispatched for Order #{$order->id} to {$attendeeEmail}");
+            } catch (\Exception $e) {
+                Log::error("Failed to dispatch order confirmation email for Order #{$order->id}: " . $e->getMessage());
+            }
+        }
+
+        $vendorWebhookUrl = null;
+        $vendorId = null;
+
+        foreach ($order->items as $item) {
+            $event = $item->ticketType?->event;
+            if ($event && $event->vendor) {
+                $vendorId = $event->vendor_id;
+                $webhook = Webhook::where('vendor_id', $vendorId)
+                    ->where('active', true)
+                    ->first();
+                if ($webhook) {
+                    $vendorWebhookUrl = $webhook->url;
+                    break;
+                }
+            }
+        }
+
+        if ($vendorWebhookUrl && $vendorId) {
+            try {
+                Http::withHeaders([
+                    'X-Internal-Secret' => $notificationSecret,
+                ])->post($notificationUrl . '/api/notifications/webhook', [
+                    'type' => 'order_webhook',
+                    'data' => [
+                        'order_id' => $order->id,
+                        'vendor_id' => $vendorId,
+                        'total_amount' => $order->total_amount,
+                        'currency' => 'usd',
+                        'status' => $order->status,
+                        'created_at' => $order->created_at->toIso8601String(),
+                        'items' => $order->items->map(fn ($item) => [
+                            'ticket_type_id' => $item->ticket_type_id,
+                            'qty' => $item->qty,
+                            'price_at_purchase' => $item->price_at_purchase,
+                        ])->toArray(),
+                        'vendor_webhook_url' => $vendorWebhookUrl,
+                    ],
+                ]);
+                Log::info("Order webhook dispatched for Order #{$order->id} to vendor #{$vendorId}");
+            } catch (\Exception $e) {
+                Log::error("Failed to dispatch order webhook for Order #{$order->id}: " . $e->getMessage());
+            }
+        }
     }
 }

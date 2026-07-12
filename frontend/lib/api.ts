@@ -34,10 +34,10 @@ api.interceptors.response.use(
 
 export const authAPI = {
   register: (data: any) =>
-    api.post('/api/register', data),
+    api.post('/api/v1/register', data),
   login: (data: { email: string; password: string }) =>
-    api.post('/api/login', data),
-  me: () => api.get('/api/user'),
+    api.post('/api/v1/login', data),
+  me: () => api.get('/api/v1/user'),
 };
 
 export const eventsAPI = {

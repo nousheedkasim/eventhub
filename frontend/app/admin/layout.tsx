@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { Shield, Users, Calendar, BarChart3, FileText, AlertTriangle, LogOut } from "lucide-react"
 import { useAuthStore } from "@/lib/store"
 import { authAPI } from "@/lib/api"
-import Header from "@/components/Header"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -77,9 +76,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
 
-      <div className="bg-white border-b shadow-sm mt-16">
+      <div className="bg-white border-b shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-6">

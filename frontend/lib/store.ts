@@ -43,6 +43,7 @@ interface CartState {
   eventId: number | null;
   addToCart: (item: CartItem, eventId: number) => void;
   removeFromCart: (ticketTypeId: number) => void;
+  updateQuantity: (ticketTypeId: number, qty: number) => void;
   clearCart: () => void;
   getTotal: () => number;
 }
@@ -64,6 +65,14 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
   removeFromCart: (ticketTypeId) => {
     set({ items: get().items.filter(i => i.ticket_type_id !== ticketTypeId) });
+  },
+  updateQuantity: (ticketTypeId, qty) => {
+    const items = get().items;
+    const index = items.findIndex(i => i.ticket_type_id === ticketTypeId);
+    if (index >= 0) {
+      items[index].qty = qty;
+      set({ items });
+    }
   },
   clearCart: () => set({ items: [], eventId: null }),
   getTotal: () => {

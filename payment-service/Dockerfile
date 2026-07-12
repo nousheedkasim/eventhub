@@ -42,4 +42,10 @@ RUN chown -R www-data:www-data storage bootstrap/cache || true
 RUN sed -i 's/:80/:8001/g' /etc/apache2/sites-enabled/000-default.conf /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf \
     && sed -i 's/Listen 80/Listen 8001/g' /etc/apache2/ports.conf
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 8001
+
+ENTRYPOINT ["docker-entrypoint.sh"]

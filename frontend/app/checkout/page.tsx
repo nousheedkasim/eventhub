@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { CreditCard, Lock } from "lucide-react"
+import { CreditCard, Lock, Plus, Minus, Trash2 } from "lucide-react"
 import { ordersAPI, paymentsAPI } from "@/lib/api"
 import { useCartStore, useAuthStore } from "@/lib/store"
 import { formatCurrency } from "@/lib/utils"
@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation"
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, eventId, clearCart, getTotal } = useCartStore()
+  const { items, eventId, clearCart, getTotal, updateQuantity, removeFromCart } = useCartStore()
   const { user, token } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [orderCreated, setOrderCreated] = useState(false)
@@ -20,6 +20,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!token) {
+      localStorage.setItem('redirectAfterLogin', '/checkout')
       router.push('/login')
     }
   }, [token, router])
@@ -130,12 +131,42 @@ export default function CheckoutPage() {
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.ticket_type_id} className="flex justify-between items-center">
-                  <div>
+                <div key={item.ticket_type_id} className="flex justify-between items-center p-4 border rounded-lg">
+                  <div className="flex-1">
                     <p className="font-medium">{item.type_name}</p>
-                    <p className="text-sm text-gray-600">Quantity: {item.qty}</p>
+                    <p className="text-sm text-gray-600">{formatCurrency(item.price)} each</p>
                   </div>
-                  <p className="font-semibold">{formatCurrency(item.price * item.qty)}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateQuantity(item.ticket_type_id, Math.max(1, item.qty - 1))}
+                        disabled={item.qty <= 1}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <span className="w-8 text-center font-medium">{item.qty}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateQuantity(item.ticket_type_id, item.qty + 1)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromCart(item.ticket_type_id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="ml-4 text-right">
+                    <p className="font-semibold">{formatCurrency(item.price * item.qty)}</p>
+                  </div>
                 </div>
               ))}
             </div>

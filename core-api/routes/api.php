@@ -58,7 +58,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     });
 
     // Vendor-only: payments for their orders
-    Route::middleware('role:vendor,attendee')->group(function () {
+    Route::middleware('role:vendor,attendee,admin')->group(function () {
         Route::get('orders', [OrderController::class, 'index']);
     });
 
@@ -72,7 +72,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     });
 
     // Vendor-specific data (own data only)
-    Route::middleware('role:vendor')->group(function () {
+    Route::middleware('role:vendor,admin')->group(function () {
         Route::get('payouts', [PayoutController::class, 'index']);
         Route::get('webhooks', [WebhookController::class, 'index']);
     });

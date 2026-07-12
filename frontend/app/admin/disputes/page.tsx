@@ -25,7 +25,8 @@ export default function AdminDisputesPage() {
   const loadDisputes = async () => {
     try {
       const res = await disputesAPI.getAll()
-      setDisputes(res.data.data || [])
+      const raw = res.data.data
+      setDisputes(Array.isArray(raw) ? raw : (raw?.data ?? []))
     } catch (error) {
       console.error('Failed to load disputes:', error)
     } finally {

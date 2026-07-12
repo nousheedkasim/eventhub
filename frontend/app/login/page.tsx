@@ -30,7 +30,14 @@ export default function LoginPage() {
         const response = await authAPI.login({ email, password })
         setAuth(response.data.data.user, response.data.data.token)
       }
-      router.push('/')
+      // Check for redirect URL after login
+      const redirectUrl = localStorage.getItem('redirectAfterLogin')
+      if (redirectUrl) {
+        localStorage.removeItem('redirectAfterLogin')
+        router.push(redirectUrl)
+      } else {
+        router.push('/')
+      }
     } catch (err: any) {
       const data = err?.response?.data
       if (data?.errors) {

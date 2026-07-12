@@ -17,7 +17,7 @@ class AuthService
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
-                'type' => $data['type'] ?? 'user',
+                'type' => $data['type'] ?? 'attendee',
             ]);
 
             if ($user->type === 'vendor') {

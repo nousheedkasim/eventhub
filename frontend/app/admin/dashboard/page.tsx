@@ -28,10 +28,12 @@ export default function AdminDashboard() {
         ordersAPI.getAll(),
       ])
 
-      const vendors = vendorsRes.data.data || []
-      const events = Array.isArray(eventsRes.data.data) ? eventsRes.data.data : (eventsRes.data.data?.data || [])
-      const orders = ordersRes.data.data || []
-      const ordersList = Array.isArray(orders) ? orders : (orders?.data || [])
+      const vendorsData = vendorsRes.data.data
+      const vendors = Array.isArray(vendorsData) ? vendorsData : (vendorsData?.data ?? [])
+      const eventsData = eventsRes.data.data
+      const events = Array.isArray(eventsData) ? eventsData : (eventsData?.data ?? [])
+      const ordersData = ordersRes.data.data
+      const ordersList = Array.isArray(ordersData) ? ordersData : (ordersData?.data ?? [])
 
       setStats({
         totalVendors: vendors.length,

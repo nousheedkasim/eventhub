@@ -20,7 +20,7 @@ class OrderSeeder extends Seeder
 {
     public function run(): void
     {
-        $attendee = User::where('email', 'user@example.com')->first();
+        $attendee = User::where('email', 'attendee@example.com')->first();
         $events = Event::all();
 
         // --- Order 1: Paid order for first event ---

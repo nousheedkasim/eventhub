@@ -37,6 +37,8 @@ services:
       DB_PASSWORD: root
       REDIS_HOST: redis
       PAYMENT_SERVICE_URL: http://payment-service:8001
+      NOTIFICATION_SERVICE_URL: http://notification-service:3002
+      NOTIFICATION_SERVICE_SECRET: secure_shared_secret
       PAYMENT_SERVICE_SECRET: secure_shared_secret
 
   payment-service:
@@ -70,6 +72,7 @@ services:
       - "3002:3002"
     volumes:
       - ./notification-service:/app
+      - /app/node_modules
     depends_on:
       - redis
     environment:

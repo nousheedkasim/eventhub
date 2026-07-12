@@ -9,7 +9,7 @@ class OrderRepository implements OrderRepositoryInterface
 {
     public function all()
     {
-        return Order::query()->paginate(15);
+        return Order::with('items')->paginate(15);
     }
 
     public function getByVendor($vendorId)

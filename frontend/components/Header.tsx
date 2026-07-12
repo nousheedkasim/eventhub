@@ -4,17 +4,24 @@ import { useAuthStore } from '@/lib/store';
 import { useCartStore } from '@/lib/store';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Header() {
   const { user, logout } = useAuthStore();
   const { items } = useCartStore();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    console.log('Header - User state:', user);
-    console.log('Header - Cart items:', items);
-  }, [user, items]);
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      console.log('Header - User state:', user);
+      console.log('Header - Cart items:', items);
+    }
+  }, [user, items, mounted]);
 
   const handleLogout = () => {
     logout();
@@ -22,6 +29,25 @@ export default function Header() {
   };
 
   const cartCount = items.reduce((sum, item) => sum + item.qty, 0);
+
+  if (!mounted) {
+    return (
+      <header className="bg-white shadow-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/" className="text-2xl font-bold text-blue-600">
+              EventHub
+            </Link>
+            <nav className="flex items-center space-x-4">
+              <Link href="/login" className="text-gray-700 hover:text-blue-600 font-medium">
+                Login
+              </Link>
+            </nav>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
@@ -32,10 +58,6 @@ export default function Header() {
           </Link>
 
           <nav className="flex items-center space-x-4">
-            <Link href="/events" className="text-gray-700 hover:text-blue-600 font-medium">
-              Events
-            </Link>
-
             {user ? (
               <>
                 <div className="flex items-center space-x-4">

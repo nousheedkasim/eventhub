@@ -40,4 +40,9 @@ return [
         'secret' => env('PAYMENT_SERVICE_SECRET', 'secure_shared_secret'),
     ],
 
+    'notification' => [
+        'url' => env('NOTIFICATION_SERVICE_URL', 'http://localhost:3002'),
+        'secret' => env('NOTIFICATION_SERVICE_SECRET', 'secure_shared_secret'),
+    ],
+
 ];

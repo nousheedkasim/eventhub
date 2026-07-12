@@ -33,5 +33,10 @@ class Order extends Model
     {
         return $this->hasOneThrough(Event::class, OrderItem::class, 'order_id', 'id', 'id', 'ticket_type_id');
     }
+
+    public function attendee()
+    {
+        return $this->belongsTo(User::class, 'attendee_id');
+    }
 }
 
